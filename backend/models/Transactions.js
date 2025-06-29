@@ -201,3 +201,42 @@ transactionSchema.statics.getMonthlySummary = function(userId, year) {
     ]);
 };
 
+transactionSchema.methods.softDelete = function() {
+    this.isDeleted = true;
+    return this.save();
+};
+
+transactionSchema.pre('save', function(next){
+    if (this.recurring && this.recurring.isRecurring && !this.recurring.nextDue) {
+        const nextDate = new Date(this.date);
+        switch (this.recurring.frequency) {
+            case 'daily':
+                nextDate.setDate(nextDate.getDate() + 1);
+                break;
+            case 'weekly':
+                nextDate.setDate(nextDate.getDate() + 7);
+                break;
+            case 'bi-weekly':
+                nextDate.setDate(nextDate.getDate() + 14);
+                break;
+            case 'monthly':
+                nextDate.setMonth(nextDate.getMonth() + 1);
+                break;
+            case 'quarterly':
+                nextDate.setMonth(nextDate.getMonth() + 3);
+                break;
+            case 'yearly':
+                nextDate.setFullYear(nextDate.getFullYear() + 1);
+                break;
+        }
+        this.recurring.nextDue = nextDate;
+    }
+
+    next();
+});
+
+transactionSchema.set('toJSON', {
+    virtuals: true
+});
+
+module.exports = mongoose.model('Transaction', transactionSchema);
