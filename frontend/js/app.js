@@ -1,53 +1,33 @@
-// Global App Configuration
+// Desktop App Configuration
 const CONFIG = {
-    API_BASE_URL: window.location.hostname.includes('vercel.app') 
-        ? 'https://personal-finance-dashboard-production.up.railway.app/api'
-        : 'http://localhost:5000/api',
-    TOKEN_KEY: 'finance_dashboard_token',
-    USER_KEY: 'finance_dashboard_user',
-    PRODUCTION_MODE: true
+    API_BASE_URL: 'http://localhost:5001/api',
+    DESKTOP_MODE: true,
+    PRODUCTION_MODE: false
 };
 
-// App State Management
+// App State Management (Simplified for Desktop)
 class AppState {
     constructor() {
-        this.user = null;
-        this.token = null;
+        this.user = {
+            id: 'desktop-user',
+            name: 'User',
+            email: 'user@localhost',
+            currency: 'USD',
+            theme: localStorage.getItem('theme') || 'light'
+        };
         this.currentPage = 'dashboard';
         this.theme = localStorage.getItem('theme') || 'light';
-        this.loadFromStorage();
-    }
-
-    loadFromStorage() {
-        this.token = localStorage.getItem(CONFIG.TOKEN_KEY);
-        const userData = localStorage.getItem(CONFIG.USER_KEY);
-        if (userData) {
-            this.user = JSON.parse(userData);
-        }
-    }
-
-    setAuth(token, user) {
-        this.token = token;
-        this.user = user;
-        localStorage.setItem(CONFIG.TOKEN_KEY, token);
-        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(user));
-    }
-
-    clearAuth() {
-        this.token = null;
-        this.user = null;
-        localStorage.removeItem(CONFIG.TOKEN_KEY);
-        localStorage.removeItem(CONFIG.USER_KEY);
     }
 
     setTheme(theme) {
         this.theme = theme;
+        this.user.theme = theme;
         localStorage.setItem('theme', theme);
         document.documentElement.setAttribute('data-theme', theme);
     }
 
     isAuthenticated() {
-        return !!(this.token && this.user);
+        return true; // Always authenticated in desktop mode
     }
 }
 
@@ -67,8 +47,8 @@ class ApiService {
             ...options
         };
 
-        // Add auth token if available
-        if (app.state.token) {
+        // For desktop mode, we don't need authentication headers
+        if (!CONFIG.DESKTOP_MODE && app.state.token) {
             config.headers.Authorization = `Bearer ${app.state.token}`;
         }
 
@@ -248,20 +228,8 @@ class FinanceApp {
         // Set initial theme
         document.documentElement.setAttribute('data-theme', this.state.theme);
         
-        // Check authentication
-        if (this.state.isAuthenticated()) {
-            try {
-                // Verify token is still valid
-                await this.api.get('/auth/me');
-                this.showApp();
-            } catch (error) {
-                console.error('Token validation failed:', error);
-                this.state.clearAuth();
-                this.showAuth();
-            }
-        } else {
-            this.showAuth();
-        }
+        // Desktop mode - always show app directly
+        this.showApp();
 
         this.setupEventListeners();
         this.hideLoading();
@@ -281,11 +249,6 @@ class FinanceApp {
                 const page = item.dataset.page;
                 this.navigateTo(page);
             });
-        });
-
-        // Logout
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            this.logout();
         });
 
         // Quick actions
@@ -308,17 +271,11 @@ class FinanceApp {
         document.getElementById('loading-screen').style.display = 'none';
     }
 
-    showAuth() {
-        document.getElementById('auth-modal').style.display = 'flex';
-        document.getElementById('app').style.display = 'none';
-    }
-
     showApp() {
-        document.getElementById('auth-modal').style.display = 'none';
         document.getElementById('app').style.display = 'flex';
         
         // Update user info
-        document.getElementById('user-name').textContent = this.state.user?.name || 'User';
+        document.getElementById('user-name').textContent = 'Personal Finance Dashboard';
         
         // Load current page
         this.loadPage(this.state.currentPage);
@@ -383,8 +340,8 @@ class FinanceApp {
                     }
                     break;
                 case 'transactions':
-                    if (window.transactionsPage) {
-                        await window.transactionsPage.load();
+                    if (window.transactionManager) {
+                        await window.transactionManager.loadTransactions();
                     }
                     break;
                 case 'budgets':
@@ -412,22 +369,10 @@ class FinanceApp {
         }
     }
 
-    async logout() {
-        try {
-            await this.api.post('/auth/logout');
-        } catch (error) {
-            console.error('Logout error:', error);
-        } finally {
-            this.state.clearAuth();
-            this.showAuth();
-            this.notifications.success('Logged out successfully');
-        }
-    }
-
     showTransactionModal() {
-        // This will be implemented with the transaction modal
-        if (window.transactionModal) {
-            window.transactionModal.show();
+        // Use the transaction manager to show the modal
+        if (window.transactionManager) {
+            window.transactionManager.showModal();
         }
     }
 

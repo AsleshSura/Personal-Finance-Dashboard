@@ -2,12 +2,16 @@
   "name": "personal-finance-dashboard",
   "version": "1.0.0",
   "description": "A comprehensive personal finance management dashboard with expense tracking, budgeting, bill reminders, and financial goal setting",
-  "main": "backend/server.js",
+  "main": "main.js",
   "scripts": {
     "start": "cd backend && node server.js",
     "dev": "cd backend && nodemon server.js",
     "install:backend": "cd backend && npm install",
     "setup": "npm run install:backend && npm install -g nodemon",
+    "electron": "electron .",
+    "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5000 && electron .\"",
+    "desktop": "concurrently \"cd backend && node simple-server.js\" \"wait-on http://localhost:5001 && electron .\"",
+    "build": "electron-builder",
     "test": "echo 'Tests will be implemented'"
   },
   "keywords": [
@@ -29,5 +33,14 @@
   "engines": {
     "node": ">=14.0.0",
     "npm": ">=6.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "electron": "^37.1.0",
+    "electron-builder": "^26.0.12",
+    "wait-on": "^8.0.3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.2.0"
   }
 }

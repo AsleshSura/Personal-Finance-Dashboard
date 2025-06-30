@@ -361,7 +361,7 @@ body {
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 16px;
 }
 
 /* Page Content */
@@ -511,36 +511,34 @@ body {
 
 /* Transaction List */
 .transaction-list {
-    background: var(--bg-primary);
-    border-radius: var(--border-radius);
-    border: 1px solid var(--border-color);
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .transaction-item {
     display: flex;
     align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
     transition: var(--transition);
 }
 
-.transaction-item:last-child {
-    border-bottom: none;
-}
-
 .transaction-item:hover {
-    background: var(--bg-secondary);
+    box-shadow: var(--shadow);
 }
 
 .transaction-icon {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 1rem;
+    border-radius: 50%;
+    font-size: 16px;
 }
 
 .transaction-icon.income {
@@ -560,17 +558,23 @@ body {
 .transaction-description {
     font-weight: 500;
     color: var(--text-primary);
-    margin-bottom: 0.25rem;
+    margin-bottom: 2px;
 }
 
 .transaction-category {
-    font-size: 0.875rem;
+    font-size: 12px;
     color: var(--text-secondary);
+    text-transform: capitalize;
+}
+
+.transaction-date {
+    font-size: 12px;
+    color: var(--text-muted);
 }
 
 .transaction-amount {
     font-weight: 600;
-    font-size: 1.125rem;
+    font-size: 16px;
 }
 
 .transaction-amount.income {
@@ -581,320 +585,165 @@ body {
     color: var(--danger-color);
 }
 
-/* Quick Actions */
-.action-buttons {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.action-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-    background: var(--bg-primary);
-    border: 2px solid var(--border-color);
-    border-radius: var(--border-radius);
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: var(--transition);
-    cursor: pointer;
-    gap: 0.5rem;
-}
-
-.action-btn:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-    transform: translateY(-2px);
-}
-
-.action-btn i {
-    font-size: 1.5rem;
-}
-
-.action-btn span {
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-
-/* Notifications */
-.notifications {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.notification {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 1rem 1.5rem;
-    box-shadow: var(--shadow-lg);
-    max-width: 400px;
-    position: relative;
-    animation: slideIn 0.3s ease-out;
-}
-
-.notification.success {
-    border-left: 4px solid var(--success-color);
-}
-
-.notification.error {
-    border-left: 4px solid var(--danger-color);
-}
-
-.notification.warning {
-    border-left: 4px solid var(--warning-color);
-}
-
-.notification.info {
-    border-left: 4px solid var(--info-color);
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-/* Tables */
-.table-container {
+/* Transaction Cards for full page */
+.transaction-card {
     background: var(--bg-primary);
     border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
     overflow: hidden;
+    transition: var(--transition);
 }
 
-.table {
-    width: 100%;
-    border-collapse: collapse;
+.transaction-card:hover {
+    box-shadow: var(--shadow);
 }
 
-.table th,
-.table td {
-    text-align: left;
-    padding: 1rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.table th {
-    background: var(--bg-secondary);
-    font-weight: 600;
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.table td {
-    color: var(--text-secondary);
-}
-
-.table tbody tr:hover {
-    background: var(--bg-secondary);
-}
-
-/* Form Styles */
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.form-actions {
+.transaction-main {
     display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    margin-top: 2rem;
-    padding-top: 1rem;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+}
+
+.transaction-info {
+    flex: 1;
+}
+
+.transaction-meta {
+    display: flex;
+    gap: 16px;
+    margin-top: 4px;
+}
+
+.transaction-actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
 }
 
-/* Status Badges */
-.badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.badge.success {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--success-color);
-}
-
-.badge.warning {
-    background: rgba(245, 158, 11, 0.1);
-    color: var(--warning-color);
-}
-
-.badge.danger {
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--danger-color);
-}
-
-.badge.info {
-    background: rgba(6, 182, 212, 0.1);
-    color: var(--info-color);
-}
-
-/* Progress Bars */
-.progress {
-    width: 100%;
-    height: 8px;
-    background: var(--bg-tertiary);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.progress-bar {
-    height: 100%;
-    background: var(--primary-color);
-    transition: width 0.3s ease;
-}
-
-.progress-bar.success {
-    background: var(--success-color);
-}
-
-.progress-bar.warning {
-    background: var(--warning-color);
-}
-
-.progress-bar.danger {
-    background: var(--danger-color);
-}
-
-/* GitHub Pages Demo Banner */
-.github-demo-banner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 10px 0;
-    text-align: center;
-    z-index: 1050;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    animation: slideDown 0.3s ease-out;
-}
-
-.demo-banner-content {
+/* Filters */
+.transactions-filters {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 14px;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
 }
 
-.demo-banner-content i {
+.filter-group {
+    flex: 1;
+}
+
+.filter-group select,
+.filter-group input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 16px;
+}
+
+.pagination button {
+    padding: 8px 16px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.pagination button:hover:not(:disabled) {
+    background: var(--bg-secondary);
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin-bottom: 16px;
     font-size: 16px;
 }
 
-.demo-banner-content span {
-    font-weight: bold;
+/* Form Enhancements */
+.form-group {
+    margin-bottom: 16px;
 }
 
-.demo-banner-content small {
-    opacity: 0.9;
-    font-size: 12px;
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-primary);
 }
 
-@keyframes slideDown {
-    from {
-        transform: translateY(-100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: var(--transition);
 }
 
-/* Adjust layout when demo banner is shown */
-.app.github-pages-mode {
-    padding-top: 45px;
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.app.github-pages-mode .sidebar {
-    top: 45px;
-    height: calc(100vh - 45px);
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
 }
 
-.app.github-pages-mode .main-content {
-    margin-top: 45px;
+/* Header Actions Spacing */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
-@media (max-width: 768px) {
-    .demo-banner-content {
-        flex-direction: column;
-        gap: 2px;
-        font-size: 12px;
-    }
-    
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .charts-section {
-        grid-column: span 1;
-        grid-template-columns: 1fr;
-    }
-    
-    .recent-section,
-    .quick-actions {
-        grid-column: span 1;
-    }
-    
-    .sidebar {
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-    }
-    
-    .sidebar.open {
-        transform: translateX(0);
-    }
-    
-    .main-content {
-        margin-left: 0;
-    }
-    
-    .header {
-        padding: 0 1rem;
-    }
-    
-    .page-content {
-        padding: 1rem;
-    }
-    
-    .summary-cards {
-        grid-template-columns: 1fr;
-    }
-    
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-    
-    .action-buttons {
-        grid-template-columns: 1fr;
-    }
+#add-transaction-btn {
+    margin-right: 12px;
 }
 
 /* Utility Classes */

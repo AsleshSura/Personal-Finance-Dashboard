@@ -16,77 +16,6 @@
         <p>Loading your dashboard...</p>
     </div>
 
-    <!-- Login/Register Modal -->
-    <div id="auth-modal" class="modal">
-        <div class="modal-content">
-            <div class="auth-container">
-                <div class="auth-header">
-                    <h2 id="auth-title">Sign In</h2>
-                    <p id="auth-subtitle">Welcome back to your finance dashboard</p>
-                </div>
-                
-                <!-- Login Form -->
-                <form id="login-form" class="auth-form">
-                    <div class="form-group">
-                        <label for="login-email">Email</label>
-                        <input type="email" id="login-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-password">Password</label>
-                        <input type="password" id="login-password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Sign In</button>
-                </form>
-
-                <!-- Register Form -->
-                <form id="register-form" class="auth-form" style="display: none;">
-                    <div class="form-group">
-                        <label for="register-name">Full Name</label>
-                        <input type="text" id="register-name" required minlength="2" maxlength="50">
-                        <small>Enter your full name (2-50 characters)</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-email">Email</label>
-                        <input type="email" id="register-email" required>
-                        <small>We'll use this for login and notifications</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-password">Password</label>
-                        <input type="password" id="register-password" required minlength="6">
-                        <small>Minimum 6 characters</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-confirm-password">Confirm Password</label>
-                        <input type="password" id="register-confirm-password" required minlength="6">
-                        <small>Re-enter your password</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-currency">Currency</label>
-                        <select id="register-currency">
-                            <option value="USD">USD ($)</option>
-                            <option value="EUR">EUR (€)</option>
-                            <option value="GBP">GBP (£)</option>
-                            <option value="JPY">JPY (¥)</option>
-                            <option value="CAD">CAD (C$)</option>
-                            <option value="AUD">AUD (A$)</option>
-                            <option value="CHF">CHF (CHF)</option>
-                            <option value="CNY">CNY (¥)</option>
-                            <option value="INR">INR (₹)</option>
-                        </select>
-                        <small>Your preferred currency for the dashboard</small>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Create Account</button>
-                </form>
-
-                <div class="auth-switch">
-                    <p id="auth-switch-text">Don't have an account? 
-                        <a href="#" id="auth-switch-link">Sign up</a>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Main Application -->
     <div id="app" class="app" style="display: none;">
         <!-- Sidebar -->
@@ -122,10 +51,7 @@
             </ul>
             <div class="sidebar-footer">
                 <div class="user-info">
-                    <span id="user-name">Loading...</span>
-                    <button id="logout-btn" class="btn-icon">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </button>
+                    <span id="user-name">Personal Finance Dashboard</span>
                 </div>
             </div>
         </nav>
@@ -249,12 +175,57 @@
         </main>
     </div>
 
+    <!-- Transaction Modal -->
+    <div id="transaction-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="transaction-modal-title">Add Transaction</h2>
+            </div>
+            <form id="transaction-form" class="modal-body">
+                <div class="form-group">
+                    <label for="transaction-type">Type</label>
+                    <select id="transaction-type" name="type" required>
+                        <option value="">Select type</option>
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="transaction-amount">Amount</label>
+                    <input type="number" id="transaction-amount" name="amount" step="0.01" min="0.01" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="transaction-description">Description</label>
+                    <input type="text" id="transaction-description" name="description" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="transaction-category">Category</label>
+                    <select id="transaction-category" name="category" required>
+                        <option value="">Select category</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="transaction-date">Date</label>
+                    <input type="date" id="transaction-date" name="date" required>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-transaction">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="save-transaction">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Notification Container -->
     <div id="notifications" class="notifications"></div>
 
     <!-- Scripts -->
     <script src="js/app.js"></script>
-    <script src="js/auth.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/transactions.js"></script>
     <script src="js/budgets.js"></script>
