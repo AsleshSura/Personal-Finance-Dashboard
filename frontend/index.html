@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Personal Finance Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
@@ -52,10 +52,6 @@
                     <li class="menu-item" data-page="calendar">
                     <i class="fas fa-calendar"></i>
                     <span>Calendar</span>
-                </li>
-                <li class="menu-item" data-page="trends">
-                    <i class="fas fa-chart-area"></i>
-                    <span>Trends</span>
                 </li>
             </ul>
             <div class="sidebar-footer">
@@ -152,20 +148,7 @@
                 </div>
 
                 <!-- Other pages will be loaded dynamically -->
-                <div id="transactions-page" class="page">
-                    <div class="transactions-filters" style="margin-bottom:1.5rem;display:flex;flex-wrap:wrap;gap:1rem;align-items:center;">
-                        <input type="text" id="tx-search" placeholder="Search description/category..." style="flex:1;min-width:180px;">
-                        <select id="tx-filter-type">
-                            <option value="">All Types</option>
-                            <option value="income">Income</option>
-                            <option value="expense">Expense</option>
-                        </select>
-                        <select id="tx-filter-category"><option value="">All Categories</option></select>
-                        <input type="number" id="tx-filter-min" placeholder="Min Amount" style="width:110px;">
-                        <input type="number" id="tx-filter-max" placeholder="Max Amount" style="width:110px;">
-                        <button class="btn btn-secondary" id="tx-filter-clear">Clear</button>
-                    </div>
-                </div>
+                <div id="transactions-page" class="page"></div>
                 <div id="budgets-page" class="page"></div>
                 <div id="bills-page" class="page"></div>
                 <div id="goals-page" class="page"></div>
@@ -174,41 +157,12 @@
                         <h3>Reports & Data Export</h3>
                     </div>
                     <div class="reports-downloads">
-                        <form id="download-range-form" class="download-range-form">
-                            <label for="download-start-date">From:</label>
-                            <input type="date" id="download-start-date" name="start" required>
-                            <label for="download-end-date">To:</label>
-                            <input type="date" id="download-end-date" name="end" required>
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-download"></i> Download Filtered Transactions (CSV)</button>
-                        </form>
-                        <button class="btn btn-secondary" id="download-all-btn"><i class="fas fa-download"></i> Download All Transactions (CSV)</button>
-                        <form id="upload-form" class="upload-form" enctype="multipart/form-data" style="margin-top:1.5rem;">
-                            <label for="upload-file" class="btn btn-success" style="margin-right:0.7rem;"><i class="fas fa-upload"></i> Import CSV or Text</label>
-                            <input type="file" id="upload-file" name="file" accept=".csv,.txt" style="display:none;">
-                            <span id="upload-filename" style="color:var(--text-secondary);"></span>
-                        </form>
-                        <div class="mt-3" style="display:flex;flex-direction:column;gap:0.7rem;">
-                            <div>
-                                <button class="btn btn-primary" id="download-budgets-btn"><i class="fas fa-download"></i> Download Budgets (CSV)</button>
-                                <input type="file" id="upload-budgets" accept=".csv,.txt" style="display:none;">
-                                <label for="upload-budgets" class="btn btn-success" style="margin-left:0.5rem;">Import Budgets</label>
-                            </div>
-                            <div>
-                                <button class="btn btn-primary" id="download-bills-btn"><i class="fas fa-download"></i> Download Bills (CSV)</button>
-                                <input type="file" id="upload-bills" accept=".csv,.txt" style="display:none;">
-                                <label for="upload-bills" class="btn btn-success" style="margin-left:0.5rem;">Import Bills</label>
-                            </div>
-                            <div>
-                                <button class="btn btn-primary" id="download-goals-btn"><i class="fas fa-download"></i> Download Goals (CSV)</button>
-                                <input type="file" id="upload-goals" accept=".csv,.txt" style="display:none;">
-                                <label for="upload-goals" class="btn btn-success" style="margin-left:0.5rem;">Import Goals</label>
-                            </div>
-                        </div>
+                        <button class="btn btn-primary" id="download-transactions-btn"><i class="fas fa-download"></i> Download Transactions (CSV)</button>
+                        <button class="btn btn-secondary" id="download-account-btn"><i class="fas fa-download"></i> Download Account History (CSV)</button>
                     </div>
                     <div id="reports-info" class="mt-3"></div>
                 </div>
                 <div id="calendar-page" class="page"></div>
-                <div id="trends-page" class="page"></div>
             </div>
         </main>
     </div>
@@ -241,42 +195,14 @@
                 
                 <div class="form-group">
                     <label for="transaction-category">Category</label>
-                    <div style="display:flex;align-items:center;gap:0.5rem;">
-                        <select id="transaction-category" name="category" required>
-                            <option value="">Select category</option>
-                        </select>
-                        <button type="button" id="manage-categories-btn" class="btn btn-icon" title="Manage Categories"><i class="fas fa-cog"></i></button>
-                    </div>
+                    <select id="transaction-category" name="category" required>
+                        <option value="">Select category</option>
+                    </select>
                 </div>
+                
                 <div class="form-group">
                     <label for="transaction-date">Date</label>
                     <input type="date" id="transaction-date" name="date" required>
-                </div>
-                <div class="form-group">
-                    <label for="transaction-tags">Tags</label>
-                    <input type="text" id="transaction-tags" name="tags" placeholder="#work, #family, #food (comma separated)">
-                </div>
-                <div class="form-group">
-                    <label for="transaction-notes">Notes</label>
-                    <textarea id="transaction-notes" name="notes" rows="2" placeholder="Add notes (optional)"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="transaction-attachment">Attachment</label>
-                    <input type="file" id="transaction-attachment" name="attachment" accept="image/*,.pdf,.txt,.doc,.docx">
-                    <small style="color:var(--text-secondary);">Optional. Images, PDFs, or documents. Max 1MB.</small>
-                </div>
-                <div class="form-group" id="recurring-fields">
-                    <label><input type="checkbox" id="transaction-recurring" name="recurring"> Recurring</label>
-                    <div id="recurring-options" style="display:none; margin-top:0.5rem;">
-                        <label for="recurring-frequency">Every</label>
-                        <select id="recurring-frequency" name="recurring-frequency">
-                            <option value="monthly">Month</option>
-                            <option value="weekly">Week</option>
-                            <option value="yearly">Year</option>
-                        </select>
-                        <label for="recurring-count">for</label>
-                        <input type="number" id="recurring-count" name="recurring-count" min="1" max="60" value="1" style="width:60px;"> times
-                    </div>
                 </div>
                 
                 <div class="modal-footer">
@@ -287,30 +213,11 @@
         </div>
     </div>
 
-    <!-- Category Manager Modal -->
-    <div id="category-modal" class="modal">
-        <div class="modal-content" style="max-width:400px;">
-            <div class="modal-header">
-                <h2>Manage Categories</h2>
-            </div>
-            <div class="modal-body">
-                <ul id="category-list" style="margin-bottom:1rem;"></ul>
-                <div style="display:flex;gap:0.5rem;align-items:center;">
-                    <input type="text" id="new-category-input" placeholder="New category" style="flex:1;">
-                    <button class="btn btn-success" id="add-category-btn"><i class="fas fa-plus"></i></button>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="close-category-modal">Close</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Notification Container -->
     <div id="notifications" class="notifications"></div>
 
     <!-- Scripts -->
-    <script src="storage.js"></script>
-    <script src="main.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>

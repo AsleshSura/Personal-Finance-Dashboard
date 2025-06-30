@@ -267,6 +267,19 @@ body {
     color: var(--text-primary);
 }
 
+.btn-fav {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0.2em;
+  font-size: 1.1em;
+  vertical-align: middle;
+}
+.btn-fav .fa-star,
+.btn-fav .fa-star-o {
+  transition: color 0.2s;
+}
+
 /* --- Final Polish & Accessibility Enhancements --- */
 
 /* Card hover/active effect */
@@ -773,41 +786,26 @@ body {
 /* Filters */
 .transactions-filters {
     display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: center;
-    margin-bottom: 1.5rem;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
 }
 
-.transactions-filters input[type="text"],
-.transactions-filters input[type="number"],
-.transactions-filters select {
-    padding: 0.4rem 0.7rem;
+.filter-group {
+    flex: 1;
+}
+
+.filter-group select,
+.filter-group input {
+    width: 100%;
+    padding: 8px 12px;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     background: var(--bg-primary);
     color: var(--text-primary);
-    font-size: 1rem;
-    outline: none;
-    transition: border 0.2s;
-}
-
-.transactions-filters input[type="text"]:focus,
-.transactions-filters input[type="number"]:focus,
-.transactions-filters select:focus {
-    border-color: var(--primary-color);
-}
-
-.transactions-filters button {
-    min-width: 90px;
-}
-
-@media (max-width: 700px) {
-    .transactions-filters {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.7rem;
-    }
 }
 
 /* Pagination */
@@ -1585,173 +1583,17 @@ body {
     margin-top: 0.5rem;
 }
 
-/* --- Reports Download Section --- */
-.reports-downloads {
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-    align-items: stretch;
-    background: var(--bg-tertiary);
-    padding: 2rem 2.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    margin-top: 2rem;
-    max-width: 600px;
+/* Transaction Tags */
+.transaction-tags {
+  margin-top: 0.2em;
+  font-size: 0.95em;
 }
-.download-range-form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.7rem 1.2rem;
-    width: 100%;
-}
-.download-range-form label {
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-right: 0.2rem;
-}
-.download-range-form input[type="date"] {
-    padding: 0.4rem 0.7rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-size: 1rem;
-    outline: none;
-    transition: border 0.2s;
-}
-.download-range-form input[type="date"]:focus {
-    border-color: var(--primary-color);
-}
-.download-range-form button {
-    min-width: 260px;
-    width: 100%;
-    margin-left: 0;
-}
-#download-all-btn {
-    min-width: 260px;
-    width: 100%;
-    font-size: 1rem;
-    padding: 0.7rem 1.2rem;
-}
-.upload-form {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 1.2rem;
-}
-.upload-form label.btn-success {
-    cursor: pointer;
-    margin-bottom: 0;
-}
-#upload-filename {
-    font-size: 0.98rem;
-    font-style: italic;
-    color: var(--text-secondary);
-    max-width: 220px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* --- Recurring Transaction Switch --- */
-#recurring-fields {
-    display: flex;
-    align-items: center;
-    gap: 1.2rem;
-    margin-top: 0.5rem;
-}
-#recurring-fields label {
-    display: flex;
-    align-items: center;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 0;
-    gap: 0.7rem;
-    font-size: 1.08rem;
-    cursor: pointer;
-}
-#transaction-recurring {
-    appearance: none;
-    width: 2.2rem;
-    height: 1.2rem;
-    background: var(--bg-tertiary);
-    border: 2px solid var(--primary-color);
-    border-radius: 1.2rem;
-    position: relative;
-    outline: none;
-    cursor: pointer;
-    transition: background 0.2s, border 0.2s;
-    margin-right: 0.2rem;
-    margin-left: 0;
-    box-sizing: border-box;
-    vertical-align: middle;
-    display: inline-block;
-}
-#transaction-recurring:checked {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-}
-#transaction-recurring::before {
-    content: '';
-    position: absolute;
-    left: 0.18rem;
-    top: 0.18rem;
-    width: 0.85rem;
-    height: 0.85rem;
-    background: #fff;
-    border-radius: 50%;
-    transition: transform 0.2s cubic-bezier(.4,0,.2,1);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-#transaction-recurring:checked::before {
-    transform: translateX(1rem);
-}
-#recurring-fields label {
-    display: flex;
-    align-items: center;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 0;
-    gap: 0.7rem;
-    font-size: 1.08rem;
-    cursor: pointer;
-}
-
-/* --- Category Manager Modal --- */
-#category-modal .modal-content {
-    max-width: 400px;
-}
-#category-list {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 1rem 0;
-}
-#category-list li {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.4rem 0.2rem;
-    border-bottom: 1px solid var(--border-color);
-    gap: 0.5rem;
-}
-#category-list li:last-child {
-    border-bottom: none;
-}
-.category-actions {
-    display: flex;
-    gap: 0.3rem;
-}
-#new-category-input {
-    padding: 0.4rem 0.7rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-size: 1rem;
-    outline: none;
-    transition: border 0.2s;
-}
-#new-category-input:focus {
-    border-color: var(--primary-color);
+.transaction-tags .tag {
+  display: inline-block;
+  background: var(--primary-color, #e0e7ef);
+  color: #222;
+  border-radius: 4px;
+  padding: 0.1em 0.5em;
+  margin-right: 0.2em;
+  font-size: 0.95em;
 }
