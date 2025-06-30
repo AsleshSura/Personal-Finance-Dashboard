@@ -81,128 +81,85 @@ Before running this application, make sure you have the following installed:
 
 ## ⚡ Quick Start
 
-### 1. Clone the Repository
+### 🌐 Try the Demo (GitHub Pages)
+**Instant access - no setup required!**
+
+Visit the live demo: [Your-GitHub-Username.github.io/Personal-Finance-Dashboard](https://your-github-username.github.io/Personal-Finance-Dashboard)
+
+**Demo features:**
+- ✅ Full responsive interface
+- ✅ All UI components and navigation
+- ✅ Sample financial data
+- ✅ Interactive charts and graphs
+- ✅ Dark/light theme switching
+
+### 🏠 Run Locally (Full Features)
+
+#### Prerequisites
+- [Node.js](https://nodejs.org/) (v14 or higher)
+- [MongoDB](https://www.mongodb.com/) (v4.4 or higher)
+
+#### Installation
 ```bash
-git clone https://github.com/yourusername/personal-finance-dashboard.git
-cd personal-finance-dashboard
-```
+# 1. Clone the repository
+git clone https://github.com/your-username/Personal-Finance-Dashboard.git
+cd Personal-Finance-Dashboard
 
-### 2. Install Dependencies
-```bash
-# Install backend dependencies
-cd backend
-npm install
+# 2. Install dependencies
+npm run setup
 
-# Install global tools for development
-npm install -g nodemon concurrently http-server
-```
-
-### 3. Environment Setup
-
-Create a `.env` file in the `backend` directory:
-
-```bash
+# 3. Configure environment
 cd backend
 cp .env.example .env
-```
+# Edit .env with your settings
 
-Update the `.env` file with your actual values:
-```env
-# IMPORTANT: Change these values for production!
-JWT_SECRET=your-super-secret-jwt-key-change-in-production-2025
-MONGODB_URI=mongodb://localhost:27017/finance_dashboard
-
-# Optional: Configure email for notifications
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-```
-
-## 🔒 Security for Public Repositories
-
-**⚠️ IMPORTANT**: Before uploading to a public GitHub repository, ensure:
-
-1. **Never commit the `.env` file** - It contains sensitive information
-2. **Use `.env.example`** - Provided template for environment variables
-3. **Change default secrets** - Generate strong, unique values for:
-   - `JWT_SECRET` - Use a cryptographically secure random string
-   - Database credentials
-   - Email passwords
-4. **Review `.gitignore`** - Ensures sensitive files are excluded
-5. **Use environment variables** - All secrets should be in `.env`, not hardcoded
-
-### Generating Secure Secrets
-```bash
-# Generate a secure JWT secret (use one of these methods):
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-# OR use online tools like: https://generate-secret.vercel.app/64
-```
-
-### 5. Start MongoDB
-Make sure MongoDB is running on your system:
-```bash
-# On Windows (if MongoDB is installed as a service)
+# 4. Start MongoDB (see MONGODB-SETUP-GUIDE.md)
 net start MongoDB
 
-# On macOS (using brew)
-brew services start mongodb-community
-
-# On Linux (systemd)
-sudo systemctl start mongod
+# 5. Start the application
+npm start
+# Open frontend/index.html in your browser
 ```
 
-### 6. Run the Application
+## 🔒 Security
 
-#### Option A: Run Backend and Frontend Separately
-```bash
-# Terminal 1 - Start Backend
-cd backend
-npm run dev
+**⚠️ IMPORTANT**: 
+- Never commit the `.env` file to version control
+- Generate a secure JWT_SECRET using: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
+- Use environment variables for all sensitive data
 
-# Terminal 2 - Start Frontend
-cd frontend
-npx http-server -p 3000 -c-1
-```
-
-#### Option B: Run Both Simultaneously
-```bash
-# From root directory
-npm run dev:both
-```
-
-### 7. Access the Application
-- **Frontend**: http://localhost:3000
+## 🌐 Access Points
+- **Frontend**: Open `frontend/index.html` in your browser
 - **Backend API**: http://localhost:5000
-- **API Health Check**: http://localhost:5000/api/health
+- **Health Check**: http://localhost:5000/api/health
 
 ## 📁 Project Structure
 
 ```
 personal-finance-dashboard/
-├── backend/
+├── backend/                    # Server-side application
 │   ├── middleware/
-│   │   └── auth.js
-│   ├── models/
+│   │   └── auth.js            # JWT authentication
+│   ├── models/                # Database schemas
 │   │   ├── User.js
-│   │   ├── Transaction.js
+│   │   ├── Transactions.js
 │   │   ├── Budget.js
 │   │   ├── Bill.js
 │   │   └── Goal.js
-│   ├── routes/
+│   ├── routes/                # API endpoints
 │   │   ├── auth.js
 │   │   ├── transactions.js
 │   │   ├── budgets.js
 │   │   ├── bills.js
 │   │   └── goals.js
-│   ├── uploads/
-│   │   ├── receipts/
-│   │   └── bills/
-│   ├── .env
+│   ├── uploads/               # File storage
+│   ├── .env                   # Environment variables
 │   ├── package.json
-│   └── server.js
-├── frontend/
+│   └── server.js              # Main server file
+├── frontend/                  # Client-side application
 │   ├── css/
-│   │   └── style.css
-│   ├── js/
+│   │   └── style.css          # Responsive styling
+│   ├── js/                    # Application modules
 │   │   ├── app.js
 │   │   ├── auth.js
 │   │   ├── dashboard.js
@@ -211,9 +168,14 @@ personal-finance-dashboard/
 │   │   ├── bills.js
 │   │   ├── goals.js
 │   │   └── charts.js
-│   └── index.html
-├── package.json
-├── README.md
+│   └── index.html             # Main application page
+├── deployment/                # Deployment guides
+├── .env.example               # Environment template
+├── .gitignore
+├── start.bat                  # Quick start script
+├── package.json               # Project metadata
+├── README.md                  # This file
+├── MONGODB-SETUP-GUIDE.md     # Database setup help
 └── LICENSE
 ```
 
@@ -240,7 +202,37 @@ The application uses MongoDB with Mongoose ODM. The database will be automatical
 - `bills` - Recurring bill management
 - `goals` - Financial goal tracking
 
-## 📱 API Documentation
+## � Deployment
+
+### GitHub Pages (Frontend Demo)
+**Perfect for showcasing the interface:**
+
+1. **Fork this repository**
+2. **Enable GitHub Pages:**
+   - Go to Settings → Pages
+   - Source: Deploy from a branch
+   - Branch: main / (root)
+3. **Access your demo:**
+   - URL: `https://your-username.github.io/Personal-Finance-Dashboard`
+   - The demo runs with sample data (no backend required)
+
+### Full Stack Deployment
+**For production with real data:**
+
+#### Frontend Options:
+- **Netlify**: Connect your GitHub repo for automatic deployments
+- **Vercel**: Connect your GitHub repo with zero configuration
+- **GitHub Pages**: For demo/portfolio purposes
+
+#### Backend Options:
+- **Railway**: Connect GitHub repo, automatic MongoDB setup
+- **Render**: Free tier with integrated database options  
+- **Heroku**: Traditional platform with MongoDB Atlas
+- **DigitalOcean**: App Platform with managed databases
+
+See the `/deployment` folder for detailed deployment guides.
+
+## �📱 API Documentation
 
 ### Authentication Endpoints
 - `POST /api/auth/register` - Register new user
