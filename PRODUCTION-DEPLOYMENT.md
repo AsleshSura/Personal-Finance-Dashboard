@@ -2,8 +2,8 @@
 
 This guide will help you deploy the full-featured Personal Finance Dashboard to production using:
 - **Frontend**: Vercel (frontend hosting)
-- **Backend**: Railway (API + Database hosting)
-- **Database**: MongoDB Atlas (cloud database)
+- **Backend**: Railway (API hosting)
+- **Database**: Railway PostgreSQL (free tier available)
 
 ## Prerequisites
 
@@ -11,48 +11,34 @@ This guide will help you deploy the full-featured Personal Finance Dashboard to 
 2. **Accounts**: Sign up for free accounts on:
    - [Vercel](https://vercel.com) 
    - [Railway](https://railway.app)
-   - [MongoDB Atlas](https://www.mongodb.com/atlas)
 
-## Step 1: Set Up MongoDB Atlas Database
-
-1. **Create Atlas Account**: Go to [MongoDB Atlas](https://www.mongodb.com/atlas) and sign up
-2. **Create Cluster**: 
-   - Choose "Free Shared" tier
-   - Select your preferred region
-   - Cluster name: `personal-finance-db`
-3. **Create Database User**:
-   - Go to "Database Access" → "Add New Database User"
-   - Username: `financeuser`
-   - Password: Generate a strong password (save this!)
-4. **Whitelist IP Addresses**:
-   - Go to "Network Access" → "Add IP Address"
-   - Add `0.0.0.0/0` (allow access from anywhere)
-5. **Get Connection String**:
-   - Go to "Clusters" → "Connect" → "Connect your application"
-   - Copy the connection string (replace `<password>` with your actual password)
-
-## Step 2: Deploy Backend to Railway
+## Step 1: Deploy Backend to Railway (with PostgreSQL)
 
 1. **Sign Up**: Go to [Railway](https://railway.app) and sign up with GitHub
 2. **Create New Project**: Click "New Project"
 3. **Deploy from GitHub**: 
    - Select "Deploy from GitHub repo"
    - Choose your `Personal-Finance-Dashboard` repository
-4. **Configure Build Settings**:
+4. **Add PostgreSQL Database**:
+   - In your project dashboard, click "New"
+   - Select "Database" → "Add PostgreSQL"
+   - Railway will provision a free PostgreSQL database
+5. **Configure Build Settings**:
    - Root Directory: `backend`
    - Start Command: `node server.js`
-5. **Add Environment Variables**:
+6. **Add Environment Variables**:
    ```
    NODE_ENV=production
-   MONGODB_URI=mongodb+srv://financeuser:<password>@personal-finance-db.xxxxx.mongodb.net/finance_dashboard?retryWrites=true&w=majority
+   DATABASE_URL=${{Postgres.DATABASE_URL}}
    JWT_SECRET=your-super-secure-jwt-secret-key-here-make-it-long
    PORT=5000
    FRONTEND_URL=https://your-vercel-app.vercel.app
    ```
-6. **Deploy**: Railway will automatically build and deploy
-7. **Get Railway URL**: Copy your Railway app URL (e.g., `https://personal-finance-dashboard-production.up.railway.app`)
+   Note: `${{Postgres.DATABASE_URL}}` is automatically provided by Railway
+7. **Deploy**: Railway will automatically build and deploy
+8. **Get Railway URL**: Copy your Railway app URL (e.g., `https://personal-finance-dashboard-production.up.railway.app`)
 
-## Step 3: Deploy Frontend to Vercel
+## Step 2: Deploy Frontend to Vercel
 
 1. **Sign Up**: Go to [Vercel](https://vercel.com) and sign up with GitHub
 2. **Import Project**: Click "New Project" → "Import Git Repository"
@@ -94,7 +80,7 @@ This guide will help you deploy the full-featured Personal Finance Dashboard to 
 ### Railway (Backend):
 ```env
 NODE_ENV=production
-MONGODB_URI=mongodb+srv://financeuser:<password>@cluster.xxxxx.mongodb.net/finance_dashboard
+DATABASE_URL=${{Postgres.DATABASE_URL}}
 JWT_SECRET=your-256-bit-secret-key-here
 PORT=5000
 FRONTEND_URL=https://your-vercel-app.vercel.app
@@ -122,8 +108,8 @@ NODE_ENV=production
    - Check Railway logs for CORS configuration
 
 2. **Database Connection**:
-   - Verify MongoDB Atlas IP whitelist includes `0.0.0.0/0`
-   - Check MongoDB URI format and credentials
+   - Verify Railway PostgreSQL service is running
+   - Check DATABASE_URL environment variable is set correctly
 
 3. **API Not Loading**:
    - Verify Railway service is running
@@ -143,10 +129,9 @@ NODE_ENV=production
 
 ## Production Checklist
 
-- [ ] MongoDB Atlas cluster created and configured
-- [ ] Database user created with proper permissions
-- [ ] Network access configured (0.0.0.0/0)
-- [ ] Railway backend deployed with all environment variables
+- [ ] Railway backend deployed with PostgreSQL database
+- [ ] Database schema migrated automatically via Prisma
+- [ ] All environment variables set correctly in Railway
 - [ ] Vercel frontend deployed and pointing to Railway API
 - [ ] CORS configuration updated with production URLs
 - [ ] JWT secret set to a secure random string
@@ -161,6 +146,15 @@ If you encounter issues:
 1. Check the troubleshooting section above
 2. Review Railway and Vercel logs
 3. Ensure all environment variables are set correctly
-4. Verify MongoDB Atlas connectivity
+4. Verify PostgreSQL database connectivity
 
 Your Personal Finance Dashboard is now live and ready for real users! 🎉
+
+## Technology Stack Used
+
+- **Frontend**: Vanilla JavaScript + Vercel hosting
+- **Backend**: Node.js + Express + Railway hosting  
+- **Database**: PostgreSQL on Railway (free tier)
+- **ORM**: Prisma for type-safe database access
+- **Authentication**: JWT tokens
+- **File Storage**: Railway persistent volumes

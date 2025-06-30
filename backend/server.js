@@ -1,11 +1,11 @@
 const express = require('express');
-const mongoose = require('mongoose');
+const { PrismaClient } = require('@prisma/client');
 const cors = require('cors');
 const path = require('path');
-const { error } = require('console');
 require('dotenv').config();
 
 const app = express();
+const prisma = new PrismaClient();
 
 // CORS configuration
 app.use(cors({
@@ -23,14 +23,21 @@ app.get('/api/health', (req, res) => {
         status: 'OK',
         message: 'Personal Finance Dashboard API is running',
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        database: 'PostgreSQL'
     });
 });
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/finance_dashboard', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-}).then(() => console.log('✅ Connected to MongoDB')).catch(err => console.error('❌ MongoDB connection error', err));
+// Test database connection
+async function connectDatabase() {
+    try {
+        await prisma.$connect();
+        console.log('✅ Connected to PostgreSQL Database');
+    } catch (error) {
+        console.error('❌ Database connection error:', error);
+        process.exit(1);
+    }
+connectDatabase();
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/transactions', require('./routes/transactions'));
@@ -49,22 +56,17 @@ if (process.env.NODE_ENV === 'production') {
 app.use((err, req, res, next) => {
     console.error('Global error:', err.stack);
 
-    if (err.name === 'ValidationError') {
-        return res.status(400).json({
-            error: 'Invalid ID format'
-        });
-    }
-
-    if (err.name === 'CastError') {
-        return res.status(400).json({
-            error: 'Invalid ID format'
-        });
-    }
-
-    if (err.code === 11000) {
+    // Prisma specific errors
+    if (err.code === 'P2002') {
         return res.status(400).json({
             error: 'Duplicate entry',
-            field: Object.keys(err.keyPattern)[0]
+            field: err.meta?.target?.[0] || 'unknown'
+        });
+    }
+
+    if (err.code === 'P2025') {
+        return res.status(404).json({
+            error: 'Record not found'
         });
     }
 
@@ -90,11 +92,23 @@ const server = app.listen(PORT, () => {
 server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
         console.error(`❌ Port ${PORT} is already in use!`);
-        console.log(`💡 Try: taskkill /f /pid $(netstat -ano | findstr :${PORT} | awk '{print $5}')`);
-        console.log(`💡 Or change the port in your .env file: PORT=3001`);
+        console.log(`💡 Try killing the process using port ${PORT}`);
         process.exit(1);
     } else {
         console.error('❌ Server error:', err);
         process.exit(1);
     }
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+    console.log('🔄 Shutting down gracefully...');
+    await prisma.$disconnect();
+    process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+    console.log('🔄 Shutting down gracefully...');
+    await prisma.$disconnect();
+    process.exit(0);
 });
