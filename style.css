@@ -1495,31 +1495,77 @@ body {
     background: #059669;
 }
 
-/* Utility Classes */
-.text-center { text-align: center; }
-.text-right { text-align: right; }
-.text-left { text-align: left; }
-
-.mb-1 { margin-bottom: 0.25rem; }
-.mb-2 { margin-bottom: 0.5rem; }
-.mb-3 { margin-bottom: 1rem; }
-.mb-4 { margin-bottom: 1.5rem; }
-.mb-5 { margin-bottom: 2rem; }
-
-.mt-1 { margin-top: 0.25rem; }
-.mt-2 { margin-top: 0.5rem; }
-.mt-3 { margin-top: 1rem; }
-.mt-4 { margin-top: 1.5rem; }
-.mt-5 { margin-top: 2rem; }
-
-.hidden { display: none !important; }
-.visible { display: block !important; }
-
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-.justify-between { justify-content: space-between; }
-
-.w-full { width: 100%; }
-.h-full { height: 100%; }
+/* --- Calendar Page Styles --- */
+#calendar-page {
+    padding: 2rem;
+}
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+#calendar-month-label {
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+.calendar-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+.calendar-table th, .calendar-table td {
+    text-align: center;
+    padding: 0.7rem 0.2rem;
+    border: 1px solid var(--border-color);
+    min-width: 40px;
+    height: 60px;
+    vertical-align: top;
+}
+.calendar-table th {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+.calendar-day {
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+}
+.calendar-day:hover {
+    background: var(--bg-tertiary);
+}
+.calendar-date {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+.calendar-expense {
+    font-size: 0.95rem;
+    color: var(--danger-color);
+    margin-top: 0.2rem;
+}
+#calendar-day-details {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    margin: 0 auto;
+    max-width: 400px;
+    margin-bottom: 1.5rem;
+}
+#calendar-day-details h4 {
+    margin-bottom: 0.7rem;
+}
+#calendar-day-details ul {
+    list-style: disc inside;
+    margin-bottom: 1rem;
+}
+#calendar-day-details button {
+    margin-top: 0.5rem;
+}
