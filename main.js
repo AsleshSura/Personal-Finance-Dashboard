@@ -1,27 +1,26 @@
 // --- BEGIN STATIC WEBSITE CODE ---
-// 1. Utility functions and classes
-const utils = {
-    formatDate(date) {
-        const d = new Date(date);
-        return d.toLocaleDateString();
-    },
-    formatCurrency(amount) {
-        return '$' + parseFloat(amount).toFixed(2);
-    },
-    generateId() {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2);
-    }
-};
+// Utility functions and classes
+// (Moved all utility functions to utils.js)
 
+// --- END UTILS ---
+
+/**
+ * Notification service for showing success/error messages.
+ */
 class NotificationService {
+    /** Show a success message. */
     static showSuccess(message) {
         alert(message); // Replace with custom UI if desired
     }
+    /** Show an error message. */
     static showError(message) {
         alert('Error: ' + message);
     }
 }
 
+/**
+ * Main app state and methods for transactions, budgets, bills, and goals.
+ */
 class FinanceApp {
     constructor() {
         this.state = {
@@ -31,14 +30,14 @@ class FinanceApp {
             goals: Storage.getGoals()
         };
     }
-
+    /** Add a new transaction. */
     addTransaction(tx) {
         tx.id = utils.generateId();
         this.state.transactions.push(tx);
         Storage.saveTransactions(this.state.transactions);
         NotificationService.showSuccess('Transaction added!');
     }
-
+    /** Update an existing transaction by ID. */
     updateTransaction(id, data) {
         const idx = this.state.transactions.findIndex(t => t.id === id);
         if (idx !== -1) {
@@ -47,107 +46,18 @@ class FinanceApp {
             NotificationService.showSuccess('Transaction updated!');
         }
     }
-
+    /** Delete a transaction by ID. */
     deleteTransaction(id) {
         this.state.transactions = this.state.transactions.filter(t => t.id !== id);
         Storage.saveTransactions(this.state.transactions);
         NotificationService.showSuccess('Transaction deleted!');
     }
-
+    /** Get all transactions. */
     getTransactions() {
         return this.state.transactions;
     }
 
-    // --- Utility Functions ---
-    getTransactionsByCategory(category) {
-        return this.state.transactions.filter(tx => tx.category === category);
-    }
-
-    getTransactionsByDateRange(start, end) {
-        return this.state.transactions.filter(tx => tx.date >= start && tx.date <= end);
-    }
-
-    getTotalByType(type) {
-        return this.state.transactions
-            .filter(tx => tx.type === type)
-            .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
-    }
-
-    getAttachmentStats() {
-        let count = 0, totalSize = 0;
-        this.state.transactions.forEach(tx => {
-            if (tx.attachment && tx.attachment.dataUrl) {
-                count++;
-                // Estimate size from base64 string
-                const size = Math.ceil((tx.attachment.dataUrl.length - (tx.attachment.dataUrl.indexOf(',') + 1)) * 3 / 4);
-                totalSize += size;
-            }
-        });
-        return { count, totalSize };
-    }
-
-    searchTransactions(keyword) {
-        const lower = keyword.toLowerCase();
-        return this.state.transactions.filter(tx =>
-            (tx.description && tx.description.toLowerCase().includes(lower)) ||
-            (tx.notes && tx.notes.toLowerCase().includes(lower))
-        );
-    }
-
-    // --- More Utility & Analytics Functions ---
-    getTopCategories(n = 3) {
-        const counts = {};
-        this.state.transactions.forEach(tx => {
-            if (!counts[tx.category]) counts[tx.category] = 0;
-            counts[tx.category] += parseFloat(tx.amount);
-        });
-        return Object.entries(counts)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, n)
-            .map(([cat, amt]) => ({ category: cat, total: amt }));
-    }
-
-    getBiggestExpense() {
-        return this.state.transactions
-            .filter(tx => tx.type === 'expense')
-            .reduce((max, tx) => (!max || parseFloat(tx.amount) > parseFloat(max.amount)) ? tx : max, null);
-    }
-
-    getMostFrequentTransaction() {
-        const freq = {};
-        this.state.transactions.forEach(tx => {
-            const key = tx.description + '|' + tx.amount + '|' + tx.category;
-            freq[key] = (freq[key] || 0) + 1;
-        });
-        let maxKey = null, maxCount = 0;
-        for (const key in freq) {
-            if (freq[key] > maxCount) {
-                maxCount = freq[key];
-                maxKey = key;
-            }
-        }
-        if (!maxKey) return null;
-        const [description, amount, category] = maxKey.split('|');
-        return { description, amount, category, count: maxCount };
-    }
-
-    getMonthlyTotals() {
-        const monthly = {};
-        this.state.transactions.forEach(tx => {
-            const ym = tx.date.slice(0, 7);
-            if (!monthly[ym]) monthly[ym] = 0;
-            monthly[ym] += parseFloat(tx.amount) * (tx.type === 'income' ? 1 : -1);
-        });
-        return monthly;
-    }
-
-    // --- Transaction Duplicate Feature ---
-    duplicateTransaction(id) {
-        const tx = this.state.transactions.find(t => t.id === id);
-        if (!tx) return;
-        const newTx = { ...tx, id: utils.generateId(), date: new Date().toISOString().slice(0, 10) };
-        this.addTransaction(newTx);
-    }
+    // Similar methods for budgets, bills, goals can be added here
 }
 
 class DashboardPage {
@@ -190,13 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.utils = utils;
     window.CONFIG = {};
     // Hide loading overlay if present
-    const loadingScreen = document.getElementById('loading-screen');
-    if (loadingScreen) loadingScreen.style.display = 'none';
+    document.getElementById('loading-screen')?.style.setProperty('display', 'none');
     // Show main app container
-    const appContainer = document.getElementById('app');
-    if (appContainer) appContainer.style.display = 'flex';
-
-    // --- BUTTON & NAVIGATION HANDLERS ---
+    document.getElementById('app')?.style.setProperty('display', 'flex');
     // Sidebar navigation
     document.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', () => {
@@ -204,35 +110,19 @@ document.addEventListener('DOMContentLoaded', () => {
             item.classList.add('active');
             const page = item.getAttribute('data-page');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const pageDiv = document.getElementById(page + '-page');
-            if (pageDiv) pageDiv.classList.add('active');
-            // Render the page content if needed
-            if (page === 'transactions') renderTransactionsPage();
+            document.getElementById(page + '-page')?.classList.add('active');
+            // Render dynamic pages
+            if (page === 'calendar') renderCalendarPage();
+            if (page === 'reports') renderReportsPage();
             if (page === 'budgets') renderBudgetsPage();
             if (page === 'bills') renderBillsPage();
             if (page === 'goals') renderGoalsPage();
+            if (page === 'trends') renderTrendsPage();
         });
     });
-    
     // Add Transaction button
     document.getElementById('add-transaction-btn')?.addEventListener('click', () => {
         document.getElementById('transaction-modal').style.display = 'flex';
-    });
-    // Quick Add Income/Expense
-    document.getElementById('quick-add-income')?.addEventListener('click', () => {
-        document.getElementById('transaction-modal').style.display = 'flex';
-        document.getElementById('transaction-type').value = 'income';
-    });
-    document.getElementById('quick-add-expense')?.addEventListener('click', () => {
-        document.getElementById('transaction-modal').style.display = 'flex';
-        document.getElementById('transaction-type').value = 'expense';
-    });
-    // Quick Add Bill/Goal (future: show relevant modals)
-    document.getElementById('quick-add-bill')?.addEventListener('click', () => {
-        alert('Bill modal not implemented yet.');
-    });
-    document.getElementById('quick-add-goal')?.addEventListener('click', () => {
-        alert('Goal modal not implemented yet.');
     });
     // Modal close/cancel
     document.getElementById('cancel-transaction')?.addEventListener('click', () => {
@@ -252,10 +142,48 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById('transactions-page').classList.add('active');
     });
+    // Initial render
+    populateCategoryDropdown();
+    renderRecentTransactions();
+    updateDashboardSummary();
+    handleTransactionForm();
+    renderCategoryChart();
+    renderIncomeExpenseChart();
+    // Render calendar/reports if active
+    if (document.querySelector('.menu-item[data-page="calendar"]')?.classList.contains('active')) renderCalendarPage();
+    if (document.getElementById('reports-page')?.classList.contains('active')) renderReportsPage();
+    // Theme toggle (dark mode)
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        // Set initial icon
+        function updateThemeIcon() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            themeToggle.innerHTML = isDark
+                ? '<i class="fas fa-sun"></i>'
+                : '<i class="fas fa-moon"></i>';
+            themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+            themeToggle.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+        }
+        updateThemeIcon();
+        themeToggle.onclick = function() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            updateThemeIcon();
+        };
+        // On load, respect saved theme
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+            updateThemeIcon();
+        });
+    }
 });
 // --- END STATIC WEBSITE CODE ---
 
 // --- BEGIN ENHANCEMENTS FOR FULL FUNCTIONALITY ---
+
+// Utility/chart helper functions moved to utils.js
 
 const DEFAULT_CATEGORIES = [
     'Salary', 'Business', 'Investment', 'Gift', 'Food', 'Transport', 'Shopping', 'Utilities', 'Health', 'Entertainment', 'Other'
@@ -264,9 +192,8 @@ const DEFAULT_CATEGORIES = [
 function populateCategoryDropdown() {
     const select = document.getElementById('transaction-category');
     if (!select) return;
-    const cats = getCategories();
     select.innerHTML = '<option value="">Select category</option>' +
-        cats.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        DEFAULT_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('');
 }
 
 function renderRecentTransactions() {
@@ -277,24 +204,54 @@ function renderRecentTransactions() {
         container.innerHTML = '<div class="empty-state"><p>No recent transactions.</p></div>';
         return;
     }
-    container.innerHTML = txs.map(tx => `
-        <div class="transaction-item">
-            <div class="transaction-icon ${tx.type}"><i class="fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}"></i></div>
-            <div class="transaction-details">
-                <div class="transaction-description">${tx.description}</div>
-                <div class="transaction-category">${tx.category}</div>
-                ${tx.tags && tx.tags.length ? `<div class='transaction-tags'>${tx.tags.map(tag => `<span class='tag'>${tag}</span>`).join(' ')}</div>` : ''}
-            </div>
-            <div class="transaction-meta">
-                <div class="transaction-date">${utils.formatDate(tx.date)}</div>
-                <div class="transaction-amount ${tx.type}">${utils.formatCurrency(tx.amount)}</div>
-                <button class="btn btn-fav" title="Favorite" onclick="toggleFavoriteTransaction('${tx.id}')">
-                    <i class="fas fa-star${tx.favorite ? '' : '-o'}" style="color:${tx.favorite ? '#fbbf24' : '#aaa'}"></i>
-                </button>
-            </div>
+    // Render bulk delete controls and transaction items
+    container.innerHTML = `
+        <div class="recent-tx-controls" style="margin-bottom:10px;">
+            <button id="bulk-delete-btn" class="btn btn-danger btn-sm" style="display:none;">
+                <i class="fas fa-trash"></i> Delete Selected
+            </button>
         </div>
-    `).join('');
+        <div class="transaction-list">
+            ${txs.map(tx => `
+                <div class="transaction-item">
+                    <input type="checkbox" class="tx-bulk-checkbox" data-id="${tx.id}" style="margin-right:8px;">
+                    <div class="transaction-icon ${tx.type}"><i class="fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}"></i></div>
+                    <div class="transaction-details">
+                        <div class="transaction-description">${tx.description}</div>
+                        <div class="transaction-category">${tx.category}</div>
+                        ${tx.notes ? `<div class='transaction-notes'><i class='fas fa-sticky-note'></i> ${tx.notes}</div>` : ''}
+                        ${tx.attachment ? `<div class='transaction-attachment'><i class='fas fa-paperclip'></i> <a href='${tx.attachment.dataUrl}' target='_blank' download='${tx.attachment.name}'>${tx.attachment.name}</a></div>` : ''}
+                    </div>
+                    <div class="transaction-meta">
+                        <div class="transaction-date">${utils.formatDate(tx.date)}</div>
+                        <div class="transaction-amount ${tx.type}">${utils.formatCurrency(tx.amount)}</div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    // Bulk delete logic
+    setTimeout(() => {
+        const checkboxes = container.querySelectorAll('.tx-bulk-checkbox');
+        const bulkBtn = document.getElementById('bulk-delete-btn');
+        // Show/hide bulk delete button based on selection
+        checkboxes.forEach(cb => cb.addEventListener('change', () => {
+            const anyChecked = Array.from(checkboxes).some(c => c.checked);
+            bulkBtn.style.display = anyChecked ? 'inline-block' : 'none';
+        }));
+        // Bulk delete selected transactions
+        bulkBtn.addEventListener('click', () => {
+            const ids = Array.from(checkboxes).filter(c => c.checked).map(c => c.getAttribute('data-id'));
+            if (ids.length && confirm('Delete selected transactions?')) {
+                ids.forEach(id => window.transactionManager.delete(id));
+                updateDashboardSummary();
+                renderRecentTransactions();
+                if (typeof renderTransactionsPage === 'function') renderTransactionsPage();
+            }
+        });
+    }, 0);
 }
+
 function updateDashboardSummary() {
     const txs = window.app.getTransactions();
     let income = 0, expenses = 0;
@@ -317,22 +274,13 @@ function updateDashboardSummary() {
 function handleTransactionForm() {
     const form = document.getElementById('transaction-form');
     if (!form) return;
-    // Recurring UI logic
-    const recurringCheckbox = document.getElementById('transaction-recurring');
-    const recurringOptions = document.getElementById('recurring-options');
-    if (recurringCheckbox && recurringOptions) {
-        recurringCheckbox.onchange = function() {
-            recurringOptions.style.display = this.checked ? 'inline-block' : 'none';
-        };
-    }
-    form.onsubmit = function(e) {
+    form.onsubmit = async function(e) {
         e.preventDefault();
         const type = form['type'].value;
-        const amount = parseFloat(form['amount'].value);
+        const amount = form['amount'].value;
         const description = form['description'].value;
         const category = form['category'].value;
         const date = form['date'].value;
-        const tags = form['tags'] && form['tags'].value ? form['tags'].value.split(',').map(t => t.trim()).filter(Boolean) : [];
         const notes = form['notes'] ? form['notes'].value : '';
         let attachment = null;
         if (form['attachment'] && form['attachment'].files && form['attachment'].files[0]) {
@@ -341,78 +289,30 @@ function handleTransactionForm() {
                 NotificationService.showError('Attachment too large (max 1MB).');
                 return;
             }
-            attachment = {
-                name: file.name,
-                type: file.type,
-                dataUrl: '' // Will be filled by FileReader below
-            };
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                attachment.dataUrl = e.target.result;
-                submitTx();
-            };
-            reader.readAsDataURL(file);
-            return;
+            attachment = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve({
+                    name: file.name,
+                    type: file.type,
+                    dataUrl: e.target.result
+                });
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
         }
-        submitTx();
-        function submitTx() {
-            const isRecurring = recurringCheckbox && recurringCheckbox.checked;
-            if (!type || !amount || !description || !category || !date) return;
-            // --- Budget Alert Logic ---
-            if (type === 'expense') {
-                const budgets = window.app.state.budgets || [];
-                const budget = budgets.find(b => b.category === category);
-                if (budget) {
-                    const txs = window.app.getTransactions().filter(tx => tx.type === 'expense' && tx.category === category && tx.date.slice(0,7) === date.slice(0,7));
-                    const spent = txs.reduce((sum, tx) => sum + parseFloat(tx.amount), 0) + amount;
-                    if (spent > parseFloat(budget.amount)) {
-                        NotificationService.showError('Warning: This will exceed your budget for ' + category + '!');
-                    } else if (spent > 0.9 * parseFloat(budget.amount)) {
-                        NotificationService.showError('Caution: You are close to your budget for ' + category + '.');
-                    }
-                }
-            }
-            // --- End Budget Alert Logic ---
-            if (isRecurring) {
-                const freq = form['recurring-frequency'].value;
-                const count = parseInt(form['recurring-count'].value) || 1;
-                let d = new Date(date);
-                for (let i = 0; i < count; ++i) {
-                    window.transactionManager.add({
-                        type, amount, description: description + ' (Recurring)', category, date: d.toISOString().slice(0, 10), tags, notes, attachment
-                    });
-                    if (freq === 'monthly') d.setMonth(d.getMonth() + 1);
-                    else if (freq === 'weekly') d.setDate(d.getDate() + 7);
-                    else if (freq === 'yearly') d.setFullYear(d.getFullYear() + 1);
-                }
-            } else {
-                window.transactionManager.add({ type, amount, description, category, date, tags, notes, attachment });
-            }
-            document.getElementById('transaction-modal').style.display = 'none';
-            form.reset();
-            if (recurringOptions) recurringOptions.style.display = 'none';
-            updateDashboardSummary();
-            renderRecentTransactions();
-        }
+        if (!type || !amount || !description || !category || !date) return;
+        window.transactionManager.add({ type, amount, description, category, date, notes, attachment });
+        document.getElementById('transaction-modal').style.display = 'none';
+        form.reset();
+        updateDashboardSummary();
+        renderRecentTransactions();
     };
 }
 
-function getChartFontColor() {
-    return getComputedStyle(document.body).getPropertyValue('--text-primary') || '#1e293b';
-}
-function getChartFontSize() {
-    return parseFloat(getComputedStyle(document.body).getPropertyValue('--chart-font-size')) || 16;
-}
-function getBarLabelColor(ctx) {
-    // Use white for dark bars, dark for light bars
-    const bg = ctx.dataset.backgroundColor[ctx.dataIndex] || ctx.dataset.backgroundColor;
-    // Simple luminance check for RGB(A)
-    let rgb = bg.match(/\d+/g);
-    if (!rgb) return '#222';
-    let [r, g, b] = rgb;
-    let luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-    return luminance < 140 ? '#fff' : '#222';
-}
+// Remove local chart helpers (now in utils.js)
+// function getChartFontColor() { ... }
+// function getChartFontSize() { ... }
+// function getBarLabelColor(ctx) { ... }
 
 function renderIncomeExpenseChart() {
     const ctx = document.getElementById('income-expense-chart');
@@ -421,47 +321,28 @@ function renderIncomeExpenseChart() {
     let income = 0, expenses = 0;
     txs.forEach(tx => {
         if (tx.type === 'income') income += parseFloat(tx.amount);
-        else if (tx.type === 'expense') expenses += parseFloat(tx.amount);
+        else expenses += parseFloat(tx.amount);
     });
     if (window.incomeExpenseChart) window.incomeExpenseChart.destroy();
     window.incomeExpenseChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'doughnut',
         data: {
             labels: ['Income', 'Expenses'],
             datasets: [{
                 data: [income, expenses],
-                backgroundColor: [
-                    'rgba(16, 185, 129, 0.9)', // green
-                    'rgba(239, 68, 68, 0.9)'   // red
-                ],
-                borderRadius: 6,
-                maxBarThickness: 60
+                backgroundColor: ['rgba(16,185,129,0.9)', 'rgba(239,68,68,0.9)'],
             }]
         },
         options: {
             plugins: {
-                legend: { display: false },
-                datalabels: { display: false }
-            },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { color: getChartFontColor(), font: { size: 20 } }
-                },
-                y: {
-                    grid: { color: 'rgba(100,116,139,0.12)' },
-                    ticks: {
-                        color: getChartFontColor(),
-                        font: { size: 20 },
-                        beginAtZero: true,
-                        callback: function(value) {
-                            return '$' + Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                        }
+                legend: {
+                    labels: {
+                        color: utils.getChartFontColor(),
+                        font: { size: utils.getChartFontSize() }
                     }
                 }
             }
-        },
-        plugins: []
+        }
     });
 }
 
@@ -477,42 +358,128 @@ function renderCategoryChart() {
     const amounts = Object.values(data);
     if (window.categoryChart) window.categoryChart.destroy();
     window.categoryChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'pie',
         data: {
             labels: categories,
             datasets: [{
                 data: amounts,
                 backgroundColor: categories.map((_, i) => i % 2 === 0 ? 'rgba(16,185,129,0.9)' : 'rgba(239,68,68,0.9)'),
-                borderRadius: 6,
-                maxBarThickness: 60
             }]
         },
         options: {
             plugins: {
-                legend: { display: false },
-                datalabels: { display: false }
-            },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { color: getChartFontColor(), font: { size: 20 } }
-                },
-                y: {
-                    grid: { color: 'rgba(100,116,139,0.12)' },
-                    ticks: {
-                        color: getChartFontColor(),
-                        font: { size: 20 },
-                        beginAtZero: true,
-                        callback: function(value) {
-                            return '$' + Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                        }
+                legend: {
+                    labels: {
+                        color: utils.getChartFontColor(),
+                        font: { size: utils.getChartFontSize() }
                     }
                 }
             }
-        },
-        plugins: []
+        }
     });
 }
+
+function renderCashFlowChart() {
+    const ctx = document.getElementById('cash-flow-chart');
+    if (!ctx) return;
+    const txs = window.app.getTransactions();
+    const monthly = {};
+    txs.forEach(tx => {
+        const ym = tx.date.slice(0, 7);
+        if (!monthly[ym]) monthly[ym] = { income: 0, expense: 0 };
+        if (tx.type === 'income') monthly[ym].income += parseFloat(tx.amount);
+        if (tx.type === 'expense') monthly[ym].expense += parseFloat(tx.amount);
+    });
+    const months = Object.keys(monthly).sort();
+    const incomeData = months.map(m => monthly[m].income);
+    const expenseData = months.map(m => monthly[m].expense);
+    if (window.cashFlowChart) window.cashFlowChart.destroy();
+    window.cashFlowChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [
+                {
+                    label: 'Income',
+                    data: incomeData,
+                    borderColor: 'rgba(16,185,129,1)',
+                    backgroundColor: 'rgba(16,185,129,0.1)',
+                    fill: false,
+                    tension: 0.2
+                },
+                {
+                    label: 'Expenses',
+                    data: expenseData,
+                    borderColor: 'rgba(239,68,68,1)',
+                    backgroundColor: 'rgba(239,68,68,0.1)',
+                    fill: false,
+                    tension: 0.2
+                }
+            ]
+        },
+        options: {
+            plugins: {
+                legend: { display: true },
+                datalabels: { display: false }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: utils.getChartFontColor() } },
+                y: { grid: { color: 'rgba(100,116,139,0.12)' }, ticks: { color: utils.getChartFontColor(), beginAtZero: true } }
+            }
+        }
+    });
+}
+
+function renderNetWorthChart() {
+    const ctx = document.getElementById('net-worth-chart');
+    if (!ctx) return;
+    const txs = window.app.getTransactions();
+    const monthly = {};
+    let runningNet = 0;
+    txs
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .forEach(tx => {
+            const ym = tx.date.slice(0, 7);
+            if (!monthly[ym]) monthly[ym] = 0;
+            runningNet += (tx.type === 'income' ? 1 : -1) * parseFloat(tx.amount);
+            monthly[ym] = runningNet;
+        });
+    const months = Object.keys(monthly).sort();
+    const netWorthData = months.map(m => monthly[m]);
+    if (window.netWorthChart) window.netWorthChart.destroy();
+    window.netWorthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Net Worth',
+                data: netWorthData,
+                borderColor: 'rgba(59,130,246,1)',
+                backgroundColor: 'rgba(59,130,246,0.1)',
+                fill: true,
+                tension: 0.2
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { display: true },
+                datalabels: { display: false }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: utils.getChartFontColor() } },
+                y: { grid: { color: 'rgba(100,116,139,0.12)' }, ticks: { color: utils.getChartFontColor(), beginAtZero: true } }
+            }
+        }
+    });
+}
+
+// Patch trends page rendering to call this
+const origRenderTrendsPage = typeof renderTrendsPage === 'function' ? renderTrendsPage : null;
+renderTrendsPage = function() {
+    if (origRenderTrendsPage) origRenderTrendsPage();
+    renderCashFlowChart();
+    renderNetWorthChart();
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     populateCategoryDropdown();
@@ -523,6 +490,57 @@ document.addEventListener('DOMContentLoaded', () => {
     renderIncomeExpenseChart();
     // Optionally, re-render charts when transactions change
 });
+
+function showChartPlaceholders() {
+    // Spending Trends
+    const trendsChart = document.getElementById('trends-chart');
+    const trendsPlaceholder = document.getElementById('trends-chart-placeholder');
+    if (trendsChart && trendsPlaceholder) {
+        const txs = window.app.getTransactions();
+        if (!txs.length) {
+            trendsChart.style.display = 'none';
+            trendsPlaceholder.style.display = 'block';
+        } else {
+            trendsChart.style.display = 'block';
+            trendsPlaceholder.style.display = 'none';
+        }
+    }
+    // Cash Flow
+    const cashFlowChart = document.getElementById('cash-flow-chart');
+    const cashFlowPlaceholder = document.getElementById('cash-flow-chart-placeholder');
+    if (cashFlowChart && cashFlowPlaceholder) {
+        const txs = window.app.getTransactions();
+        if (!txs.some(tx => tx.type === 'income' || tx.type === 'expense')) {
+            cashFlowChart.style.display = 'none';
+            cashFlowPlaceholder.style.display = 'block';
+        } else {
+            cashFlowChart.style.display = 'block';
+            cashFlowPlaceholder.style.display = 'none';
+        }
+    }
+    // Net Worth
+    const netWorthChart = document.getElementById('net-worth-chart');
+    const netWorthPlaceholder = document.getElementById('net-worth-chart-placeholder');
+    if (netWorthChart && netWorthPlaceholder) {
+        const txs = window.app.getTransactions();
+        if (!txs.length) {
+            netWorthChart.style.display = 'none';
+            netWorthPlaceholder.style.display = 'block';
+        } else {
+            netWorthChart.style.display = 'block';
+            netWorthPlaceholder.style.display = 'none';
+        }
+    }
+}
+// Call after rendering charts and on page load
+renderTrendsPage = (function(orig) {
+    return function() {
+        if (typeof orig === 'function') orig();
+        showChartPlaceholders();
+    };
+})(typeof renderTrendsPage === 'function' ? renderTrendsPage : null);
+document.addEventListener('DOMContentLoaded', showChartPlaceholders);
+
 // --- END ENHANCEMENTS ---
 
 // --- BEGIN SUBTAB RENDERING ---
@@ -536,171 +554,77 @@ function renderTransactionsPage() {
         return;
     }
     page.innerHTML = `
-        <h2>All Transactions <button class='btn btn-secondary' id='show-favorites-btn'><i class='fas fa-star'></i> Favorites</button></h2>
+        <h2>All Transactions</h2>
         <div class="transaction-list">
-            ${txs.map(tx => {
-                const isGoal = tx.description && tx.description.toLowerCase().includes('goal');
-                return `
-                <div class="transaction-item" data-id="${tx.id}">
+            ${txs.map(tx => `
+                <div class="transaction-item">
                     <div class="transaction-icon ${tx.type}"><i class="fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}"></i></div>
                     <div class="transaction-details">
                         <div class="transaction-description">${tx.description}</div>
                         <div class="transaction-category">${tx.category}</div>
-                        ${tx.tags && tx.tags.length ? `<div class='transaction-tags'>${tx.tags.map(tag => `<span class='tag'>${tag}</span>`).join(' ')}</div>` : ''}
+                        ${tx.notes ? `<div class='transaction-notes'><i class='fas fa-sticky-note'></i> ${tx.notes}</div>` : ''}
+                        ${tx.attachment ? `<div class='transaction-attachment'><i class='fas fa-paperclip'></i> <a href='${tx.attachment.dataUrl}' target='_blank' download='${tx.attachment.name}'>${tx.attachment.name}</a></div>` : ''}
                     </div>
                     <div class="transaction-meta">
                         <div class="transaction-date">${utils.formatDate(tx.date)}</div>
                         <div class="transaction-amount ${tx.type}">${utils.formatCurrency(tx.amount)}</div>
-                        <button class="btn btn-fav" title="Favorite" onclick="toggleFavoriteTransaction('${tx.id}')">
-                            <i class="fas fa-star${tx.favorite ? '' : '-o'}" style="color:${tx.favorite ? '#fbbf24' : '#aaa'}"></i>
-                        </button>
-                    </div>
-                    <div class="transaction-actions">
-                        ${!isGoal ? `<button class="btn btn-secondary btn-edit-tx" title="Edit"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-danger btn-delete-tx" title="Delete"><i class="fas fa-trash"></i></button>` : ''}
-                        <button class="btn btn-secondary btn-duplicate-tx" title="Duplicate"><i class="fas fa-copy"></i></button>
                     </div>
                 </div>
-                `;
-            }).join('')}
+            `).join('')}
         </div>
     `;
-    // Add event listeners for edit/delete
-    page.querySelectorAll('.btn-edit-tx').forEach(btn => {
-        btn.onclick = function(e) {
-            const id = btn.closest('.transaction-item').getAttribute('data-id');
-            editTransaction(id);
-        };
-    });
-    page.querySelectorAll('.btn-delete-tx').forEach(btn => {
-        btn.onclick = function(e) {
-            const id = btn.closest('.transaction-item').getAttribute('data-id');
-            if (confirm('Delete this transaction?')) {
-                window.app.deleteTransaction(id);
-                renderTransactionsPage();
-                updateDashboardSummary && updateDashboardSummary();
-                renderRecentTransactions && renderRecentTransactions();
-            }
-        };
-    });
-    // Add duplicate button event listeners
-    document.querySelectorAll('.btn-duplicate-tx').forEach(btn => {
-        btn.onclick = function() {
-            const id = btn.closest('.transaction-item').getAttribute('data-id');
-            window.app.duplicateTransaction(id);
-            renderTransactionsPage();
-            renderRecentTransactions && renderRecentTransactions();
-        };
-    });
-    // Filter favorites
-    const favBtn = document.getElementById('show-favorites-btn');
-    if (favBtn) {
-        favBtn.onclick = function() {
-            const favs = window.app.getTransactions().filter(tx => tx.favorite);
-            if (!favs.length) return alert('No favorites yet!');
-            page.innerHTML = `<h2>Favorite Transactions</h2><div class='transaction-list'>${favs.map(tx => `
-                <div class='transaction-item'>
-                    <div class='transaction-icon ${tx.type}'><i class='fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}'></i></div>
-                    <div class='transaction-details'>
-                        <div class='transaction-description'>${tx.description}</div>
-                        <div class='transaction-category'>${tx.category}</div>
-                        ${tx.tags && tx.tags.length ? `<div class='transaction-tags'>${tx.tags.map(tag => `<span class='tag'>${tag}</span>`).join(' ')}</div>` : ''}
-                    </div>
-                    <div class='transaction-meta'>
-                        <div class='transaction-date'>${utils.formatDate(tx.date)}</div>
-                        <div class='transaction-amount ${tx.type}'>${utils.formatCurrency(tx.amount)}</div>
-                        <button class='btn btn-fav' title='Favorite' onclick='toggleFavoriteTransaction("${tx.id}")'>
-                            <i class='fas fa-star' style='color:#fbbf24'></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('')}</div><button class='btn' onclick='renderTransactionsPage()'>Back</button>`;
-        };
-    }
-}
-
-function editTransaction(id) {
-    const tx = window.app.getTransactions().find(t => t.id === id);
-    if (!tx) return;
-    // Show modal and prefill
-    document.getElementById('transaction-modal').style.display = 'flex';
-    document.getElementById('transaction-modal-title').textContent = 'Edit Transaction';
-    document.getElementById('transaction-type').value = tx.type;
-    document.getElementById('transaction-amount').value = tx.amount;
-    document.getElementById('transaction-description').value = tx.description;
-    document.getElementById('transaction-category').value = tx.category;
-    document.getElementById('transaction-date').value = tx.date;
-    document.getElementById('transaction-tags').value = (tx.tags || []).join(', ');
-    document.getElementById('transaction-notes').value = tx.notes || '';
-    window._editTxId = id;
-    // Patch form submit
-    const form = document.getElementById('transaction-form');
-    if (form) {
-        form.onsubmit = function(e) {
-            e.preventDefault();
-            const data = {
-                type: form.type.value,
-                amount: parseFloat(form.amount.value),
-                description: form.description.value,
-                category: form.category.value,
-                date: form.date.value,
-                tags: form['tags'] && form['tags'].value ? form['tags'].value.split(',').map(t => t.trim()).filter(Boolean) : [],
-                notes: form['notes'] ? form['notes'].value : ''
-            };
-            window.app.updateTransaction(window._editTxId, data);
-            document.getElementById('transaction-modal').style.display = 'none';
-            renderTransactionsPage();
-            updateDashboardSummary && updateDashboardSummary();
-            renderRecentTransactions && renderRecentTransactions();
-            window._editTxId = null;
-            // Restore default form handler
-            handleTransactionForm && handleTransactionForm();
-        };
-    }
 }
 
 function renderBudgetsPage() {
     const page = document.getElementById('budgets-page');
     if (!page) return;
-    const budgets = window.app.state.budgets || [];
-    const txs = window.app.getTransactions();
+    const budgets = Storage.getBudgets();
     page.innerHTML = `
-        <h2 class="budgets-title">Budgets</h2>
-        <form id="budget-form" class="budget-form">
-            <div class="budget-form-group">
-                <label for="budget-category">Category</label>
-                <select id="budget-category" required>
-                    <option value="">Select category</option>
-                    ${DEFAULT_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
-                </select>
+        <div class="budgets-card">
+            <div class="budgets-header-row">
+                <h2 class="budgets-title">Budgets</h2>
             </div>
-            <div class="budget-form-group">
-                <label for="budget-amount">Amount</label>
-                <input type="number" id="budget-amount" min="0.01" step="0.01" required />
+            <div class="budgets-chart-container">
+                <canvas id="budgets-pie-chart" width="380" height="380"></canvas>
             </div>
-            <div class="budget-form-group">
-                <label for="budget-period">Period</label>
-                <select id="budget-period" required>
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary budget-add-btn">Add Budget</button>
-        </form>
-        <div id="budgets-list"></div>
+            <div id="budgets-list"></div>
+        </div>
     `;
     renderBudgetsList();
-    document.getElementById('budget-form').onsubmit = function(e) {
-        e.preventDefault();
-        const category = document.getElementById('budget-category').value;
-        const amount = parseFloat(document.getElementById('budget-amount').value);
-        const period = document.getElementById('budget-period').value;
-        if (!category || !amount || !period) return;
-        window.app.state.budgets.push({ id: utils.generateId(), category, amount, period });
-        Storage.saveBudgets(window.app.state.budgets);
-        renderBudgetsList();
-        this.reset();
-    };
+    renderBudgetsPieChart(budgets);
+}
+
+function renderBudgetsPieChart(budgets) {
+    const ctx = document.getElementById('budgets-pie-chart');
+    if (!ctx || !budgets.length) return;
+    const labels = budgets.map(b => b.name);
+    const data = budgets.map(b => Number(b.amount) || 0);
+    const backgroundColors = [
+        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#a78bfa', '#f472b6', '#06b6d4', '#f87171', '#34d399', '#fbbf24', '#6366f1'
+    ];
+    if (window.budgetsPieChart) window.budgetsPieChart.destroy();
+    window.budgetsPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels,
+            datasets: [{
+                data,
+                backgroundColor: backgroundColors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { position: 'bottom', labels: { color: getChartFontColor() } },
+                datalabels: {
+                    color: getChartFontColor(),
+                    font: { weight: 'bold', size: 16 },
+                    formatter: v => v ? v : ''
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
 }
 
 function renderBudgetsList() {
@@ -816,8 +740,19 @@ if (budgetForm) {
 function renderBillsPage() {
     const page = document.getElementById('bills-page');
     if (!page) return;
-    // Card container
     let bills = Storage.getBills();
+    if (!bills.length) {
+        page.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <p>No bills yet. Add one to get started!</p>
+                <button class="btn btn-primary" id="add-bill-btn-empty">+ Add Bill</button>
+            </div>`;
+        document.getElementById('add-bill-btn-empty').onclick = () => {
+            showBillModal();
+        };
+        return;
+    }
     page.innerHTML = `
         <div class="bills-card">
             <div class="bills-header-row">
@@ -869,7 +804,7 @@ function renderBillsPage() {
         const amount = parseFloat(document.getElementById('bill-amount').value);
         const date = document.getElementById('bill-date').value;
         if (!name || isNaN(amount) || !date) return;
-        const bills = Storage.getBills();
+        let bills = Storage.getBills();
         bills.push({ id: utils.generateId(), name, amount, date, status: 'upcoming' });
         Storage.saveBills(bills);
         renderBillsList();
@@ -952,6 +887,18 @@ function renderGoalsPage() {
     const page = document.getElementById('goals-page');
     if (!page) return;
     const goals = Storage.getGoals();
+    if (!goals.length) {
+        page.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-bullseye"></i>
+                <p>No goals yet. Add one to get started!</p>
+                <button class="btn btn-primary" id="add-goal-btn-empty">+ Add Goal</button>
+            </div>`;
+        document.getElementById('add-goal-btn-empty').onclick = () => {
+            showGoalModal();
+        };
+        return;
+    }
     page.innerHTML = `
         <div class="bills-card goals-card">
             <div class="bills-header-row">
@@ -1189,10 +1136,168 @@ window.addToGoal = function(id) {
     Storage.saveGoals(updatedGoals);
     renderGoalsList();
 };
-// --- END BUDGET FUNCTIONALITY ---
+
+function showGoalModal() {
+    let modal = document.getElementById('goal-modal');
+    if (!modal) {
+        // Create modal if not present
+        modal = document.createElement('div');
+        modal.id = 'goal-modal';
+        modal.className = 'modal show';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header"><h2 id="goal-modal-title">Add Goal</h2></div>
+                <form id="goal-form" class="modal-body">
+                    <div class="form-group">
+                        <label for="goal-name">Name</label>
+                        <input type="text" id="goal-name" name="name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-amount">Target Amount</label>
+                        <input type="number" id="goal-amount" name="amount" step="0.01" min="0.01" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-date">Target Date</label>
+                        <input type="date" id="goal-date" name="date" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-desc">Description (optional)</label>
+                        <textarea id="goal-desc" name="desc" rows="2"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancel-goal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Goal</button>
+                    </div>
+                </form>
+            </div>`;
+        document.body.appendChild(modal);
+    } else {
+        modal.classList.add('show');
+    }
+    document.getElementById('goal-form').onsubmit = function(e) {
+        e.preventDefault();
+        const name = document.getElementById('goal-name').value.trim();
+        const amount = parseFloat(document.getElementById('goal-amount').value);
+        const date = document.getElementById('goal-date').value;
+        const desc = document.getElementById('goal-desc').value.trim();
+        if (!name || isNaN(amount) || !date) return;
+        let goals = Storage.getGoals();
+        goals.push({ id: utils.generateId(), name, amount, date, desc, saved: 0, status: 'active' });
+        Storage.saveGoals(goals);
+        modal.classList.remove('show');
+        renderGoalsPage();
+    };
+    document.getElementById('cancel-goal').onclick = () => {
+        modal.classList.remove('show');
+    };
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.remove('show');
+    };
+}
+
+// --- Recurring Options Rendering ---
+// Ensure recurring options (when/frequency) are rendered and handled
+function renderRecurringOptions() {
+    const container = document.getElementById('recurring-options');
+    if (!container) return;
+    container.innerHTML = `
+      <div class="recurring-row">
+        <div class="recurring-col">
+          <label for="recurring-interval">Every</label>
+          <input type="number" id="recurring-interval" name="recurring-interval" min="1" value="1" class="recurring-input">
+        </div>
+        <div class="recurring-col">
+          <label for="recurring-frequency" class="visually-hidden">Frequency</label>
+          <select id="recurring-frequency" name="recurring-frequency" class="recurring-input">
+            <option value="day">Day(s)</option>
+            <option value="week">Week(s)</option>
+            <option value="month">Month(s)</option>
+            <option value="year">Year(s)</option>
+          </select>
+        </div>
+        <div class="recurring-col recurring-next">
+          <label for="recurring-next-date">Next on</label>
+          <input type="date" id="recurring-next-date" name="recurring-next-date" class="recurring-input">
+        </div>
+      </div>
+    `;
+}
+// Show/hide recurring options based on checkbox
+const recurringCheckbox = document.getElementById('transaction-recurring');
+if (recurringCheckbox) {
+    recurringCheckbox.addEventListener('change', function() {
+        const options = document.getElementById('recurring-options');
+        if (this.checked) {
+            renderRecurringOptions();
+            options.style.display = 'flex';
+        } else {
+            options.innerHTML = '';
+            options.style.display = 'none';
+        }
+    });
+    // Initial state
+    if (recurringCheckbox.checked) {
+        renderRecurringOptions();
+        document.getElementById('recurring-options').style.display = 'flex';
+    } else {
+        document.getElementById('recurring-options').style.display = 'none';
+    }
+}
+
+// --- Transaction Templates ---
+const TEMPLATE_KEY = 'transactionTemplates';
+function getTemplates() {
+    return JSON.parse(localStorage.getItem(TEMPLATE_KEY) || '[]');
+}
+function saveTemplates(templates) {
+    localStorage.setItem(TEMPLATE_KEY, JSON.stringify(templates));
+}
+function populateTemplateDropdown() {
+    const select = document.getElementById('transaction-template-select');
+    if (!select) return;
+    const templates = getTemplates();
+    select.innerHTML = '<option value="">Select a template...</option>' +
+        templates.map((tpl, i) => `<option value="${i}">${tpl.description || 'Template ' + (i+1)}</option>`).join('');
+}
+document.addEventListener('DOMContentLoaded', () => {
+    populateTemplateDropdown();
+    // Template select fill form
+    document.getElementById('transaction-template-select')?.addEventListener('change', function() {
+        const idx = this.value;
+        if (!idx) return;
+        const tpl = getTemplates()[idx];
+        if (!tpl) return;
+        document.getElementById('transaction-type').value = tpl.type;
+        document.getElementById('transaction-amount').value = tpl.amount;
+        document.getElementById('transaction-description').value = tpl.description;
+        document.getElementById('transaction-category').value = tpl.category;
+        document.getElementById('transaction-date').value = tpl.date;
+        document.getElementById('transaction-tags').value = tpl.tags || '';
+        document.getElementById('transaction-notes').value = tpl.notes || '';
+    });
+    // Save as template
+    document.getElementById('save-template-btn')?.addEventListener('click', function() {
+        const type = document.getElementById('transaction-type').value;
+        const amount = document.getElementById('transaction-amount').value;
+        const description = document.getElementById('transaction-description').value;
+        const category = document.getElementById('transaction-category').value;
+        const date = document.getElementById('transaction-date').value;
+        const tags = document.getElementById('transaction-tags').value;
+        const notes = document.getElementById('transaction-notes').value;
+        if (!type || !amount || !description || !category || !date) {
+            NotificationService.showError('Fill out the form before saving as template.');
+            return;
+        }
+        const templates = getTemplates();
+        templates.push({ type, amount, description, category, date, tags, notes });
+        saveTemplates(templates);
+        populateTemplateDropdown();
+        NotificationService.showSuccess('Template saved!');
+    });
+});
+// --- END SUBTAB RENDERING ---
 
 // --- BEGIN CALENDAR PAGE FUNCTIONALITY ---
-
 function renderCalendarPage() {
     const page = document.getElementById('calendar-page');
     if (!page) return;
@@ -1295,396 +1400,230 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- BEGIN REPORTS PAGE FUNCTIONALITY ---
 function renderReportsPage() {
-    // Date range form
-    const rangeForm = document.getElementById('download-range-form');
-    const allBtn = document.getElementById('download-all-btn');
-    if (rangeForm) {
-        rangeForm.onsubmit = function(e) {
-            e.preventDefault();
-            const start = document.getElementById('download-start-date').value;
-            const end = document.getElementById('download-end-date').value;
-            if (!start || !end) return NotificationService.showError('Please select both dates.');
-            const txs = window.app.getTransactions().filter(tx => {
-                return tx.date >= start && tx.date <= end;
-            });
-            if (!txs.length) return NotificationService.showError('No transactions in selected range.');
-            const csv = transactionsToCSV(txs);
-            downloadCSV(csv, `transactions_${start}_to_${end}.csv`);
-        };
-    }
-    if (allBtn) {
-        allBtn.onclick = function() {
+    // Attach download handlers
+    const txBtn = document.getElementById('download-transactions-btn');
+    const accBtn = document.getElementById('download-account-btn');
+    if (txBtn) {
+        txBtn.onclick = function() {
             const txs = window.app.getTransactions();
             if (!txs.length) return NotificationService.showError('No transactions to export.');
             const csv = transactionsToCSV(txs);
-            downloadCSV(csv, 'transactions_all.csv');
+            downloadCSV(csv, 'transactions.csv');
         };
     }
-    // Upload logic
-    const uploadInput = document.getElementById('upload-file');
-    const uploadForm = document.getElementById('upload-form');
-    const uploadFilename = document.getElementById('upload-filename');
-    if (uploadInput && uploadForm) {
-        uploadInput.onchange = function() {
-            if (uploadInput.files.length) {
-                uploadFilename.textContent = uploadInput.files[0].name;
-                handleFileUpload(uploadInput.files[0]);
-            } else {
-                uploadFilename.textContent = '';
-            }
+    if (accBtn) {
+        accBtn.onclick = function() {
+            const txs = window.app.getTransactions();
+            if (!txs.length) return NotificationService.showError('No account history to export.');
+            const csv = accountHistoryToCSV(txs);
+            downloadCSV(csv, 'account_history.csv');
         };
-        uploadForm.onsubmit = function(e) { e.preventDefault(); };
     }
 }
 
-function handleFileUpload(file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const text = e.target.result;
-        let imported = false;
-        if (file.name.endsWith('.csv')) {
-            imported = importTransactionsFromCSV(text);
-        } else if (file.name.endsWith('.txt')) {
-            imported = importTransactionsFromText(text);
-        }
-        if (imported) {
-            NotificationService.showSuccess('Data imported! Refreshing...');
-            setTimeout(() => window.location.reload(), 800);
-        } else {
-            NotificationService.showError('Could not import data. Check file format.');
-        }
-    };
-    reader.readAsText(file);
+function transactionsToCSV(txs) {
+    const header = ['ID','Type','Amount','Description','Category','Date'];
+    const rows = txs.map(tx => [
+        tx.id,
+        tx.type,
+        tx.amount,
+        '"' + (tx.description || '').replace(/"/g, '""') + '"',
+        tx.category,
+        tx.date
+    ]);
+    return [header, ...rows].map(r => r.join(',')).join('\r\n');
 }
 
-function importTransactionsFromCSV(text) {
-    // Accepts: ID,Type,Amount,Description,Category,Date (header row optional)
-    const lines = text.trim().split(/\r?\n/);
-    let start = 0;
-    if (/id|type|amount|description|category|date/i.test(lines[0])) start = 1;
-    const txs = Storage.getTransactions();
-    let imported = 0;
-    for (let i = start; i < lines.length; ++i) {
-        const row = lines[i].split(',');
-        if (row.length < 6) continue;
-        const [id, type, amount, description, category, date] = row;
-        if (!type || !amount || !date) continue;
-        txs.push({
-            id: id || utils.generateId(),
-            type: type.trim(),
-            amount: parseFloat(amount),
-            description: description.replace(/^"|"$/g, ''),
-            category: category.trim(),
-            date: date.trim()
-        });
-        imported++;
-    }
-    if (imported) Storage.saveTransactions(txs);
-    return imported > 0;
+function accountHistoryToCSV(txs) {
+    // Account history: running balance after each transaction
+    let balance = 0;
+    const header = ['ID','Type','Amount','Description','Category','Date','Balance After'];
+    const rows = txs.map(tx => {
+        if (tx.type === 'income') balance += parseFloat(tx.amount);
+        else if (tx.type === 'expense') balance -= parseFloat(tx.amount);
+        return [
+            tx.id,
+            tx.type,
+            tx.amount,
+            '"' + (tx.description || '').replace(/"/g, '""') + '"',
+            tx.category,
+            tx.date,
+            balance.toFixed(2)
+        ];
+    });
+    return [header, ...rows].map(r => r.join(',')).join('\r\n');
 }
 
-function importTransactionsFromText(text) {
-    // Accepts lines like: type,amount,description,category,date
-    const lines = text.trim().split(/\r?\n/);
-    const txs = Storage.getTransactions();
-    let imported = 0;
-    for (let line of lines) {
-        const row = line.split(',');
-        if (row.length < 5) continue;
-        const [type, amount, description, category, date] = row;
-        if (!type || !amount || !date) continue;
-        txs.push({
-            id: utils.generateId(),
-            type: type.trim(),
-            amount: parseFloat(amount),
-            description: description.replace(/^"|"$/g, ''),
-            category: category.trim(),
-            date: date.trim()
-        });
-        imported++;
-    }
-    if (imported) Storage.saveTransactions(txs);
-    return imported > 0;
+function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 0);
 }
+
+// Patch navigation to render reports page
+const reportsMenuItem = document.querySelector('.menu-item[data-page="reports"]');
+if (reportsMenuItem) {
+    reportsMenuItem.addEventListener('click', renderReportsPage);
+}
+// If user lands on reports page directly (refresh)
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('reports-page')?.classList.contains('active')) {
+        renderReportsPage();
+    }
+});
 // --- END REPORTS PAGE FUNCTIONALITY ---
 
-// --- BEGIN EXPORT/IMPORT FOR BUDGETS, BILLS, GOALS ---
-function setupReportsDataImportExport() {
-    // Budgets
-    document.getElementById('download-budgets-btn')?.addEventListener('click', () => {
-        const arr = Storage.getBudgets();
-        if (!arr.length) return NotificationService.showError('No budgets to export.');
-        const csv = [['Category','Amount','Period'].join(',')].concat(arr.map(b => [b.category,b.amount,b.period].join(','))).join('\r\n');
-        downloadCSV(csv, 'budgets.csv');
-    });
-    document.getElementById('upload-budgets')?.addEventListener('change', function() {
-        if (!this.files.length) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const lines = e.target.result.trim().split(/\r?\n/);
-            let start = 0;
-            if (/category|amount|period/i.test(lines[0])) start = 1;
-            const arr = [];
-            for (let i = start; i < lines.length; ++i) {
-                const [category, amount, period] = lines[i].split(',');
-                if (category && amount && period) arr.push({category, amount, period});
-            }
-            if (arr.length) Storage.saveBudgets(arr);
-            NotificationService.showSuccess('Budgets imported!');
-            setTimeout(()=>window.location.reload(), 800);
-        };
-        reader.readAsText(this.files[0]);
-    });
-    // Bills
-    document.getElementById('download-bills-btn')?.addEventListener('click', () => {
-        const arr = Storage.getBills();
-        if (!arr.length) return NotificationService.showError('No bills to export.');
-        const csv = [['Name','Amount','DueDate','Status'].join(',')].concat(arr.map(b => [b.name,b.amount,b.dueDate,b.status].join(','))).join('\r\n');
-        downloadCSV(csv, 'bills.csv');
-    });
-    document.getElementById('upload-bills')?.addEventListener('change', function() {
-        if (!this.files.length) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const lines = e.target.result.trim().split(/\r?\n/);
-            let start = 0;
-            if (/name|amount|due/i.test(lines[0])) start = 1;
-            const arr = [];
-            for (let i = start; i < lines.length; ++i) {
-                const [name, amount, dueDate, status] = lines[i].split(',');
-                if (name && amount && dueDate) arr.push({name, amount, dueDate, status: status||'pending'});
-            }
-            if (arr.length) Storage.saveBills(arr);
-            NotificationService.showSuccess('Bills imported!');
-            setTimeout(()=>window.location.reload(), 800);
-        };
-        reader.readAsText(this.files[0]);
-    });
-    // Goals
-    document.getElementById('download-goals-btn')?.addEventListener('click', () => {
-        const arr = Storage.getGoals();
-        if (!arr.length) return NotificationService.showError('No goals to export.');
-        const csv = [['Name','Amount','Date','Desc','Saved','Status'].join(',')].concat(arr.map(g => [g.name,g.amount,g.date,g.desc||'',g.saved||0,g.status||''].join(','))).join('\r\n');
-        downloadCSV(csv, 'goals.csv');
-    });
-    document.getElementById('upload-goals')?.addEventListener('change', function() {
-        if (!this.files.length) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const lines = e.target.result.trim().split(/\r?\n/);
-            let start = 0;
-            if (/name|amount|date/i.test(lines[0])) start = 1;
-            const arr = [];
-            for (let i = start; i < lines.length; ++i) {
-                const [name, amount, date, desc, saved, status] = lines[i].split(',');
-                if (name && amount && date) arr.push({name, amount, date, desc, saved: parseFloat(saved)||0, status: status||''});
-            }
-            if (arr.length) Storage.saveGoals(arr);
-            NotificationService.showSuccess('Goals imported!');
-            setTimeout(()=>window.location.reload(), 800);
-        };
-        reader.readAsText(this.files[0]);
-    });
-}
-document.addEventListener('DOMContentLoaded', setupReportsDataImportExport);
-// --- END EXPORT/IMPORT FOR BUDGETS, BILLS, GOALS ---
-
 // --- BEGIN DARK MODE TOGGLE FUNCTIONALITY ---
-    // Theme toggle (dark mode)
-    const themeToggle = document.getElementById('theme-toggle');
-    if (themeToggle) {
-        // Set initial theme from localStorage or system preference
-        const root = document.documentElement;
-        function setTheme(theme) {
-            root.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-            // Optionally update icon
-            const icon = themeToggle.querySelector('i');
-            if (icon) {
-                icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-            }
-        }
-        const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        setTheme(currentTheme);
-        // Toggle on click
-        themeToggle.addEventListener('click', () => {
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            setTheme(newTheme);
-        });
+// --- Modern Theme Toggle Button Logic ---
+const themeToggleBtn = document.getElementById('theme-toggle');
+if (themeToggleBtn) {
+    // Set initial icon
+    function updateThemeIcon() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        themeToggleBtn.innerHTML = isDark
+            ? '<i class="fas fa-sun"></i>'
+            : '<i class="fas fa-moon"></i>';
+        themeToggleBtn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        themeToggleBtn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
     }
+    updateThemeIcon();
+    themeToggleBtn.onclick = function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        updateThemeIcon();
+    };
+    // On load, respect saved theme
+    document.addEventListener('DOMContentLoaded', () => {
+        const saved = localStorage.getItem('theme');
+        if (saved) document.documentElement.setAttribute('data-theme', saved);
+        updateThemeIcon();
+    });
+}
 // --- END DARK MODE TOGGLE FUNCTIONALITY ---
-// --- FAVORITE/STARRED TRANSACTIONS ---
-// Add a favorite property to transactions and UI controls
-function toggleFavoriteTransaction(id) {
-    const txs = window.app.getTransactions();
-    const idx = txs.findIndex(t => t.id === id);
-    if (idx !== -1) {
-        txs[idx].favorite = !txs[idx].favorite;
-        Storage.saveTransactions(txs);
-        renderTransactionsPage && renderTransactionsPage();
-        renderRecentTransactions && renderRecentTransactions();
+
+// --- BEGIN BILL REMINDERS ---
+function showBillReminders() {
+    const now = new Date();
+    const soon = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+    const upcoming = (window.app.state.bills || []).filter(bill => {
+        if (!bill.date) return false;
+        const billDate = new Date(bill.date);
+        return billDate >= now && billDate <= soon;
+    });
+    if (upcoming.length) {
+        const notifications = document.getElementById('notifications');
+        if (notifications) {
+            notifications.innerHTML = `<div class="notification info"><i class="fas fa-bell"></i> ${upcoming.length} bill(s) due within 7 days!</div>`;
+            setTimeout(() => { notifications.innerHTML = ''; }, 8000);
+        }
     }
 }
-window.toggleFavoriteTransaction = toggleFavoriteTransaction;
+document.addEventListener('DOMContentLoaded', showBillReminders);
+// Also show reminders after adding/deleting bills
+function afterBillChange() {
+    updateDashboardSummary();
+    showBillReminders();
+}
+// Patch bill add/delete logic if present
+if (window.app && window.app.state && window.app.state.bills) {
+    // If you have addBill/deleteBill methods, call afterBillChange() after them
+}
+// --- END BILL REMINDERS ---
 
-// Patch renderRecentTransactions to show star icon
-const origRenderRecentTransactions = renderRecentTransactions;
-renderRecentTransactions = function() {
-    const txs = window.app.getTransactions().slice(-5).reverse();
-    const container = document.getElementById('recent-transactions');
-    if (!container) return;
-    if (txs.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>No recent transactions.</p></div>';
-        return;
+// --- BEGIN DASHBOARD WIDGET VISIBILITY ---
+const DASHBOARD_WIDGETS_KEY = 'dashboardWidgetsVisible';
+function getDashboardWidgetsVisible() {
+    return JSON.parse(localStorage.getItem(DASHBOARD_WIDGETS_KEY) || '{}');
+}
+function saveDashboardWidgetsVisible(obj) {
+    localStorage.setItem(DASHBOARD_WIDGETS_KEY, JSON.stringify(obj));
+}
+function setupDashboardWidgetSettings() {
+    const grid = document.querySelector('.summary-cards');
+    if (!grid) return;
+    // Add settings button
+    let btn = document.getElementById('dashboard-widget-settings-btn');
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'dashboard-widget-settings-btn';
+        btn.className = 'btn btn-secondary btn-sm';
+        btn.innerHTML = '<i class="fas fa-cog"></i> Widgets';
+        btn.style.marginBottom = '10px';
+        grid.parentNode.insertBefore(btn, grid);
     }
-    container.innerHTML = txs.map(tx => `
-        <div class="transaction-item">
-            <div class="transaction-icon ${tx.type}"><i class="fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}"></i></div>
-            <div class="transaction-details">
-                <div class="transaction-description">${tx.description}</div>
-                <div class="transaction-category">${tx.category}</div>
-                ${tx.tags && tx.tags.length ? `<div class='transaction-tags'>${tx.tags.map(tag => `<span class='tag'>${tag}</span>`).join(' ')}</div>` : ''}
-            </div>
-            <div class="transaction-meta">
-                <div class="transaction-date">${utils.formatDate(tx.date)}</div>
-                <div class="transaction-amount ${tx.type}">${utils.formatCurrency(tx.amount)}</div>
-                <button class="btn btn-fav" title="Favorite" onclick="toggleFavoriteTransaction('${tx.id}')">
-                    <i class="fas fa-star${tx.favorite ? '' : '-o'}" style="color:${tx.favorite ? '#fbbf24' : '#aaa'}"></i>
-                </button>
-            </div>
-        </div>
-    `).join('');
-};
-
-// Patch renderTransactionsPage to show star icon and filter
-const origRenderTransactionsPage = renderTransactionsPage;
-renderTransactionsPage = function() {
-    const page = document.getElementById('transactions-page');
-    if (!page) return;
-    const txs = window.app.getTransactions();
-    if (txs.length === 0) {
-        page.innerHTML = '<div class="empty-state"><p>No transactions found.</p></div>';
-        return;
-    }
-    page.innerHTML = `
-        <h2>All Transactions <button class='btn btn-secondary' id='show-favorites-btn'><i class='fas fa-star'></i> Favorites</button></h2>
-        <div class="transaction-list">
-            ${txs.map(tx => {
-                const isGoal = tx.description && tx.description.toLowerCase().includes('goal');
-                return `
-                <div class="transaction-item" data-id="${tx.id}">
-                    <div class="transaction-icon ${tx.type}"><i class="fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}"></i></div>
-                    <div class="transaction-details">
-                        <div class="transaction-description">${tx.description}</div>
-                        <div class="transaction-category">${tx.category}</div>
-                        ${tx.tags && tx.tags.length ? `<div class='transaction-tags'>${tx.tags.map(tag => `<span class='tag'>${tag}</span>`).join(' ')}</div>` : ''}
-                    </div>
-                    <div class="transaction-meta">
-                        <div class="transaction-date">${utils.formatDate(tx.date)}</div>
-                        <div class="transaction-amount ${tx.type}">${utils.formatCurrency(tx.amount)}</div>
-                        <button class="btn btn-fav" title="Favorite" onclick="toggleFavoriteTransaction('${tx.id}')">
-                            <i class="fas fa-star${tx.favorite ? '' : '-o'}" style="color:${tx.favorite ? '#fbbf24' : '#aaa'}"></i>
-                        </button>
-                    </div>
-                    <div class="transaction-actions">
-                        ${!isGoal ? `<button class="btn btn-secondary btn-edit-tx" title="Edit"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-danger btn-delete-tx" title="Delete"><i class="fas fa-trash"></i></button>` : ''}
-                        <button class="btn btn-secondary btn-duplicate-tx" title="Duplicate"><i class="fas fa-copy"></i></button>
-                    </div>
-                </div>
-                `;
-            }).join('')}
-        </div>
-    `;
-    // Add event listeners for edit/delete
-    page.querySelectorAll('.btn-edit-tx').forEach(btn => {
-        btn.onclick = function(e) {
-            const id = btn.closest('.transaction-item').getAttribute('data-id');
-            editTransaction(id);
-        };
+    btn.onclick = () => {
+        const visible = getDashboardWidgetsVisible();
+        const modal = document.createElement('div');
+        modal.className = 'modal show';
+        modal.innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Dashboard Widgets</h2></div><div class="modal-body">
+            <label><input type="checkbox" data-widget="balance" ${visible.balance !== false ? 'checked' : ''}/> Total Balance</label><br>
+            <label><input type="checkbox" data-widget="income" ${visible.income !== false ? 'checked' : ''}/> Monthly Income</label><br>
+            <label><input type="checkbox" data-widget="expenses" ${visible.expenses !== false ? 'checked' : ''}/> Monthly Expenses</label><br>
+            <label><input type="checkbox" data-widget="bills" ${visible.bills !== false ? 'checked' : ''}/> Upcoming Bills</label><br>
+        </div><div class="modal-footer"><button class="btn btn-secondary" id="close-widget-modal">Close</button></div></div>`;
+        document.body.appendChild(modal);
+        modal.querySelectorAll('input[type=checkbox]').forEach(cb => {
+            cb.addEventListener('change', () => {
+                visible[cb.getAttribute('data-widget')] = cb.checked;
+                saveDashboardWidgetsVisible(visible);
+                renderDashboardWidgets();
+            });
+        });
+        document.getElementById('close-widget-modal').onclick = () => modal.remove();
+    };
+}
+function renderDashboardWidgets() {
+    const visible = getDashboardWidgetsVisible();
+    const cards = document.querySelectorAll('.summary-cards .card');
+    if (!cards.length) return;
+    // Order: balance, income, expenses, bills
+    ['balance', 'income', 'expenses', 'bills'].forEach((key, i) => {
+        if (cards[i]) cards[i].style.display = (visible[key] !== false) ? '' : 'none';
     });
-    page.querySelectorAll('.btn-delete-tx').forEach(btn => {
-        btn.onclick = function(e) {
-            const id = btn.closest('.transaction-item').getAttribute('data-id');
-            if (confirm('Delete this transaction?')) {
-                window.app.deleteTransaction(id);
-                renderTransactionsPage();
-                updateDashboardSummary && updateDashboardSummary();
-                renderRecentTransactions && renderRecentTransactions();
-            }
-        };
-    });
-    // Add duplicate button event listeners
-    document.querySelectorAll('.btn-duplicate-tx').forEach(btn => {
-        btn.onclick = function() {
-            const id = btn.closest('.transaction-item').getAttribute('data-id');
-            window.app.duplicateTransaction(id);
-            renderTransactionsPage();
-            renderRecentTransactions && renderRecentTransactions();
-        };
-    });
-    // Filter favorites
-    const favBtn = document.getElementById('show-favorites-btn');
-    if (favBtn) {
-        favBtn.onclick = function() {
-            const favs = window.app.getTransactions().filter(tx => tx.favorite);
-            if (!favs.length) return alert('No favorites yet!');
-            page.innerHTML = `<h2>Favorite Transactions</h2><div class='transaction-list'>${favs.map(tx => `
-                <div class='transaction-item'>
-                    <div class='transaction-icon ${tx.type}'><i class='fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}'></i></div>
-                    <div class='transaction-details'>
-                        <div class='transaction-description'>${tx.description}</div>
-                        <div class='transaction-category'>${tx.category}</div>
-                        ${tx.tags && tx.tags.length ? `<div class='transaction-tags'>${tx.tags.map(tag => `<span class='tag'>${tag}</span>`).join(' ')}</div>` : ''}
-                    </div>
-                    <div class='transaction-meta'>
-                        <div class='transaction-date'>${utils.formatDate(tx.date)}</div>
-                        <div class='transaction-amount ${tx.type}'>${utils.formatCurrency(tx.amount)}</div>
-                        <button class='btn btn-fav' title='Favorite' onclick='toggleFavoriteTransaction("${tx.id}")'>
-                            <i class='fas fa-star' style='color:#fbbf24'></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('')}</div><button class='btn' onclick='renderTransactionsPage()'>Back</button>`;
-        };
-    }
-};
-// --- END SUBTAB RENDERING ---
-
-// --- DASHBOARD ANALYTICS PANEL ---
-function renderDashboardAnalytics() {
-    const panel = document.getElementById('dashboard-analytics-panel');
-    if (!panel) return;
-    const topCats = window.app.getTopCategories();
-    const biggest = window.app.getBiggestExpense();
-    const frequent = window.app.getMostFrequentTransaction();
-    panel.innerHTML = `
-        <h3>Quick Analytics</h3>
-        <div><b>Top Categories:</b> ${topCats.map(c => `${c.category} ($${c.total.toFixed(2)})`).join(', ')}</div>
-        <div><b>Biggest Expense:</b> ${biggest ? `${biggest.description} ($${parseFloat(biggest.amount).toFixed(2)})` : 'N/A'}</div>
-        <div><b>Most Frequent:</b> ${frequent ? `${frequent.description} (${frequent.count}×)` : 'N/A'}</div>
-    `;
 }
 document.addEventListener('DOMContentLoaded', () => {
-    // Add analytics panel to dashboard
-    const dash = document.getElementById('dashboard-page');
-    if (dash && !document.getElementById('dashboard-analytics-panel')) {
-        const panel = document.createElement('div');
-        panel.id = 'dashboard-analytics-panel';
-        panel.className = 'dashboard-analytics-panel';
-        dash.appendChild(panel);
-    }
-    renderDashboardAnalytics();
+    setupDashboardWidgetSettings();
+    renderDashboardWidgets();
 });
-// Re-render analytics after transaction changes
-const origAddTx = window.app.addTransaction.bind(window.app);
-window.app.addTransaction = function(tx) {
-    origAddTx(tx);
-    renderDashboardAnalytics && renderDashboardAnalytics();
-};
-const origDeleteTx = window.app.deleteTransaction.bind(window.app);
-window.app.deleteTransaction = function(id) {
-    origDeleteTx(id);
-    renderDashboardAnalytics && renderDashboardAnalytics();
-};
-// --- END DASHBOARD ANALYTICS PANEL ---
+
+// --- BEGIN KEYBOARD SHORTCUTS ---
+document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 't' || e.key === 'T') {
+        document.getElementById('add-transaction-btn')?.click();
+    }
+    if (e.key >= '1' && e.key <= '7') {
+        const pages = ['dashboard','transactions','budgets','bills','goals','reports','calendar','trends'];
+        const idx = parseInt(e.key, 10) - 1;
+        if (pages[idx]) {
+            document.querySelector(`.menu-item[data-page="${pages[idx]}"]`)?.click();
+        }
+    }
+});
+// --- END KEYBOARD SHORTCUTS ---
+
+// main.js - Main app logic for Personal Finance Dashboard
+//
+// Cross-file integration:
+// - Uses utils.js for all formatting, ID generation, and chart helpers (window.utils)
+// - Uses storage.js for all persistent data (window.Storage)
+// - All DOM elements referenced are defined in index.html
+// - Exports global objects for use in other scripts
+// - See utils.js and storage.js for usage examples
+//
+// Example cross-link: use a utility and storage helper together
+if (typeof window !== 'undefined' && window.utils && window.Storage) {
+    // Log the formatted balance of all transactions
+    const txs = window.Storage.getTransactions();
+    const total = txs.reduce((sum, tx) => sum + Number(tx.amount), 0);
+    console.log('Total transaction amount:', window.utils.formatCurrency(total));
+}

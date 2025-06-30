@@ -1,3 +1,13 @@
+/*
+ * style.css - Styles for Personal Finance Dashboard
+ *
+ * Cross-file integration:
+ * - Styles all IDs/classes referenced in index.html and main.js
+ * - All selectors are documented and cross-referenced in index.html and JS files
+ * - See index.html for structure, main.js for dynamic class/ID usage
+ * - Example: .dark-mode class toggled by main.js, .report-section styled for reports rendered by JS
+ */
+
 /* CSS Variables for Theme */
 :root {
     --primary-color: #3b82f6;
@@ -28,7 +38,7 @@
 }
 
 /* Dark Theme */
-[data-theme="dark"] {
+html[data-theme="dark"] {
     --bg-primary: #0f172a;
     --bg-secondary: #1e293b;
     --bg-tertiary: #334155;
@@ -328,11 +338,11 @@ body {
 }
 
 /* Ensure sufficient contrast for dark mode buttons */
-[data-theme="dark"] .btn-primary {
+html[data-theme="dark"] .btn-primary {
     background: var(--primary-dark);
     color: #fff;
 }
-[data-theme="dark"] .btn-secondary {
+html[data-theme="dark"] .btn-secondary {
     background: var(--bg-tertiary);
     color: var(--text-primary);
 }
@@ -474,35 +484,35 @@ body {
     display: block;
 }
 
-/* --- Dashboard Grid Responsive Spread --- */
+/* --- Dashboard Grid Responsive Spread (merged and DRY) --- */
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 2.5rem;
   align-items: start;
+  max-width: 1400px;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2rem;
 }
 .summary-cards {
-  grid-column: 1 / span 2;
-  display: flex;
-  gap: 2rem;
+  grid-column: span 12;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
   margin-bottom: 2rem;
 }
 .charts-section {
-  display: flex;
+  grid-column: span 8;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 2rem;
-  grid-column: 1 / span 2;
-}
-.chart-container {
-  flex: 1 1 0;
-  min-width: 320px;
-  background: var(--bg-tertiary);
-  border-radius: 12px;
-  padding: 2rem 1.5rem;
-  box-shadow: var(--shadow);
 }
 .recent-section {
-  grid-column: 1 / span 2;
+  grid-column: span 8;
   margin-top: 2.5rem;
+}
+.quick-actions {
+  grid-column: span 4;
 }
 @media (max-width: 1100px) {
   .dashboard-grid {
@@ -510,40 +520,12 @@ body {
   }
   .charts-section {
     flex-direction: column;
+    grid-template-columns: 1fr;
   }
   .summary-cards {
     flex-direction: column;
+    grid-template-columns: 1fr;
   }
-}
-
-/* Dashboard Grid */
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 2rem;
-    max-width: 1400px;
-}
-
-.summary-cards {
-    grid-column: span 12;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-}
-
-.charts-section {
-    grid-column: span 8;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-}
-
-.recent-section {
-    grid-column: span 8;
-}
-
-.quick-actions {
-    grid-column: span 4;
 }
 
 /* Cards */
@@ -627,7 +609,7 @@ body {
 .chart-bright-font {
     color: #fff !important;
 }
-[data-theme="dark"] .chart-bright-font {
+html[data-theme="dark"] .chart-bright-font {
     color: #f1f5f9 !important;
 }
 
@@ -885,7 +867,7 @@ body {
 .form-group select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
 }
 
 .modal-footer {
@@ -1218,10 +1200,10 @@ body {
 }
 
 /* --- Lighten Budget Card and Entries in Dark Mode --- */
-[data-theme="dark"] #budgets-list-card {
+html[data-theme="dark"] #budgets-list-card {
     background: var(--bg-secondary);
 }
-[data-theme="dark"] .budget-list-entry {
+html[data-theme="dark"] .budget-list-entry {
     background: var(--bg-tertiary);
 }
 
@@ -1585,173 +1567,207 @@ body {
     margin-top: 0.5rem;
 }
 
-/* --- Reports Download Section --- */
-.reports-downloads {
+/* =============================
+ * Reports Section & Theme Toggle
+ * =============================
+ *
+ * The following classes and IDs are tightly integrated with the reports page rendering (main.js) and the HTML structure (index.html):
+ *
+ *   .reports-center-outer      - Main flex container for vertical centering and spacing of the reports section.
+ *   .reports-center-wrapper    - Inner flex column for centering and stacking content.
+ *   .reports-downloads         - Card-style container for download/upload forms and actions.
+ *
+ * These ensure a responsive, visually consistent layout for the reports page, and are referenced directly in both the HTML and JavaScript.
+ *
+ *   #theme-toggle              - The dark mode toggle button, styled for both light and dark themes, with clear hover/focus/active states.
+ *                                This is toggled via main.js and present in the header (index.html).
+ *
+ * All selectors and class names are kept consistent across HTML, JS, and CSS for seamless, maintainable UI/UX.
+ */
+
+.reports-center-outer {
+    width: 100%;
+    min-height: 80vh;
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
-    align-items: stretch;
-    background: var(--bg-tertiary);
-    padding: 2rem 2.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    margin-top: 2rem;
-    max-width: 600px;
-}
-.download-range-form {
-    display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 0.7rem 1.2rem;
+    justify-content: flex-start;
+}
+.reports-center-wrapper {
     width: 100%;
-}
-.download-range-form label {
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-right: 0.2rem;
-}
-.download-range-form input[type="date"] {
-    padding: 0.4rem 0.7rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-size: 1rem;
-    outline: none;
-    transition: border 0.2s;
-}
-.download-range-form input[type="date"]:focus {
-    border-color: var(--primary-color);
-}
-.download-range-form button {
-    min-width: 260px;
-    width: 100%;
-    margin-left: 0;
-}
-#download-all-btn {
-    min-width: 260px;
-    width: 100%;
-    font-size: 1rem;
-    padding: 0.7rem 1.2rem;
-}
-.upload-form {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    margin-top: 1.2rem;
+    justify-content: center;
 }
-.upload-form label.btn-success {
-    cursor: pointer;
-    margin-bottom: 0;
-}
-#upload-filename {
-    font-size: 0.98rem;
-    font-style: italic;
-    color: var(--text-secondary);
-    max-width: 220px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.reports-center-wrapper .reports-downloads {
+    width: 100%;
+    max-width: 650px;
 }
 
-/* --- Recurring Transaction Switch --- */
-#recurring-fields {
+/* Dark mode toggle button styles */
+#theme-toggle {
+    border: none;
+    background: linear-gradient(135deg, var(--primary-color) 60%, #60a5fa 100%);
+    color: #fff;
+    border-radius: 18px;
+    width: 60px;
+    height: 60px;
     display: flex;
     align-items: center;
-    gap: 1.2rem;
-    margin-top: 0.5rem;
-}
-#recurring-fields label {
-    display: flex;
-    align-items: center;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 0;
-    gap: 0.7rem;
-    font-size: 1.08rem;
-    cursor: pointer;
-}
-#transaction-recurring {
-    appearance: none;
-    width: 2.2rem;
-    height: 1.2rem;
-    background: var(--bg-tertiary);
-    border: 2px solid var(--primary-color);
-    border-radius: 1.2rem;
-    position: relative;
+    justify-content: center;
+    font-size: 2.1rem;
+    box-shadow: 0 4px 24px 0 rgba(59,130,246,0.18), 0 1.5px 8px 0 rgba(0,0,0,0.10);
     outline: none;
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s, border 0.18s, transform 0.13s;
     cursor: pointer;
-    transition: background 0.2s, border 0.2s;
-    margin-right: 0.2rem;
-    margin-left: 0;
-    box-sizing: border-box;
-    vertical-align: middle;
-    display: inline-block;
+    position: relative;
+    z-index: 10;
+    margin: 0 0 0 8px;
 }
-#transaction-recurring:checked {
+#theme-toggle:focus, #theme-toggle:active {
+    box-shadow: 0 0 0 3px var(--primary-dark), 0 4px 24px 0 rgba(59,130,246,0.18);
+    outline: none;
+    border: none;
+    transform: scale(0.97);
+}
+#theme-toggle:hover {
+    background: linear-gradient(135deg, var(--primary-dark) 60%, #2563eb 100%);
+    color: #fff;
+    box-shadow: 0 6px 28px 0 rgba(59,130,246,0.22);
+    border: none;
+}
+#theme-toggle i {
+    font-size: 2.1rem;
+    pointer-events: none;
+    filter: drop-shadow(0 1px 2px #0002);
+}
+html[data-theme="dark"] #theme-toggle {
+    background: linear-gradient(135deg, #1e293b 60%, #2563eb 100%);
+    color: #fff;
+    border: none;
+}
+html[data-theme="dark"] #theme-toggle:hover {
+    background: linear-gradient(135deg, #2563eb 60%, #1e293b 100%);
+    color: #fff;
+    border: none;
+}
+
+/* --- Modal Form Scrollbar and Max Height for Transaction Modal --- */
+#transaction-modal .modal-content {
+    max-height: 80vh;
+    overflow-y: auto;
+    /* For smooth scrolling and always visible scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) var(--bg-secondary);
+}
+#transaction-modal .modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+#transaction-modal .modal-content::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+#transaction-modal .modal-content::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+/* --- Custom Checkbox Styling for Recurring Field --- */
+#transaction-recurring[type="checkbox"] {
+    accent-color: var(--primary-color);
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    border-radius: 4px;
+    box-shadow: none;
+    outline: none;
+    vertical-align: middle;
+    background: var(--bg-primary);
+    border: 1.5px solid var(--border-color);
+    transition: border 0.15s, box-shadow 0.15s;
+}
+#transaction-recurring[type="checkbox"]:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.18);
+}
+#transaction-recurring[type="checkbox"]:checked {
+    accent-color: var(--primary-color);
     background: var(--primary-color);
     border-color: var(--primary-color);
 }
-#transaction-recurring::before {
-    content: '';
-    position: absolute;
-    left: 0.18rem;
-    top: 0.18rem;
-    width: 0.85rem;
-    height: 0.85rem;
-    background: #fff;
-    border-radius: 50%;
-    transition: transform 0.2s cubic-bezier(.4,0,.2,1);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+#transaction-recurring[type="checkbox"]::-ms-check {
+    color: var(--primary-color);
 }
-#transaction-recurring:checked::before {
-    transform: translateX(1rem);
-}
-#recurring-fields label {
-    display: flex;
-    align-items: center;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 0;
-    gap: 0.7rem;
-    font-size: 1.08rem;
-    cursor: pointer;
+#transaction-recurring[type="checkbox"]::-webkit-check {
+    color: var(--primary-color);
 }
 
-/* --- Category Manager Modal --- */
-#category-modal .modal-content {
-    max-width: 400px;
+/* --- Recurring Options Row Styling: Modern Card Layout --- */
+#recurring-options {
+    display: block;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    border: 1.5px solid var(--primary-color);
+    padding: 18px 18px 12px 18px;
+    margin-top: 10px;
+    margin-bottom: 0;
+    box-shadow: 0 2px 12px 0 rgba(59,130,246,0.08);
+    min-width: 0;
+    max-width: 420px;
 }
-#category-list {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 1rem 0;
-}
-#category-list li {
+.recurring-row {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.4rem 0.2rem;
-    border-bottom: 1px solid var(--border-color);
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    gap: 1.2rem 1.5rem;
+    align-items: flex-end;
+    width: 100%;
 }
-#category-list li:last-child {
-    border-bottom: none;
-}
-.category-actions {
+.recurring-col {
     display: flex;
-    gap: 0.3rem;
+    flex-direction: column;
+    flex: 1 1 120px;
+    min-width: 110px;
+    max-width: 160px;
 }
-#new-category-input {
-    padding: 0.4rem 0.7rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
+.recurring-col.recurring-next {
+    min-width: 140px;
+    max-width: 180px;
+}
+.recurring-row label {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 1rem;
+    letter-spacing: 0.01em;
+}
+.recurring-input {
+    padding: 10px 12px;
+    border-radius: 7px;
+    border: 1.5px solid var(--primary-color);
     background: var(--bg-primary);
     color: var(--text-primary);
-    font-size: 1rem;
-    outline: none;
-    transition: border 0.2s;
+    font-size: 1.08rem;
+    font-weight: 500;
+    box-shadow: 0 1px 3px 0 rgba(59,130,246,0.04);
+    transition: border 0.15s, box-shadow 0.15s;
 }
-#new-category-input:focus {
-    border-color: var(--primary-color);
+.recurring-input:focus {
+    border-color: var(--primary-dark);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.13);
+}
+@media (max-width: 600px) {
+    #recurring-options {
+        padding: 10px 6px 8px 6px;
+        max-width: 99vw;
+    }
+    .recurring-row {
+        flex-direction: column;
+        gap: 0.7rem;
+    }
+    .recurring-col {
+        min-width: 90px;
+        max-width: 99vw;
+    }
 }
