@@ -623,6 +623,14 @@ body {
     color: var(--text-primary) !important;
 }
 
+/* --- Chart Bright Font for Dark Mode --- */
+.chart-bright-font {
+    color: #fff !important;
+}
+[data-theme="dark"] .chart-bright-font {
+    color: #f1f5f9 !important;
+}
+
 /* Section Headers */
 .section-header {
     display: flex;
@@ -1068,23 +1076,26 @@ body {
     outline: 2px solid var(--primary-dark);
 }
 .budget-table .btn-delete {
-    background: var(--danger-color);
-    color: #fff;
-    border: none;
-    width: 90px;
-    padding: 0.55rem 0;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    margin-bottom: 0;
-    box-shadow: 0 1px 4px 0 rgba(239,68,68,0.08);
-    transition: background 0.15s, box-shadow 0.15s, color 0.15s;
+    background: var(--danger-color) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0.55rem 0.9rem !important;
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    margin-right: 0.5rem !important;
+    min-width: 2.2em !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background 0.15s !important;
+    box-shadow: none !important;
 }
 .budget-table .btn-delete:hover, .budget-table .btn-delete:focus {
-    background: #b91c1c;
-    color: #fff;
-    box-shadow: 0 2px 8px 0 rgba(239,68,68,0.15);
-    outline: 2px solid #b91c1c;
+    background: #b91c1c !important;
+    color: #fff !important;
+    outline: 2px solid #b91c1c !important;
 }
 
 /* Stack buttons vertically with spacing */
@@ -1469,10 +1480,15 @@ body {
     color: #fff;
     border: none;
     border-radius: 8px;
-    padding: 0.55rem 1.2rem;
-    font-size: 1rem;
+    padding: 0.55rem 0.9rem;
+    font-size: 1.25rem;
     font-weight: 600;
     margin-right: 0.5rem;
+    min-width: 2.2em;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     transition: background 0.15s;
 }
 .bills-table .btn-success:hover, .bills-table .btn-success:focus {

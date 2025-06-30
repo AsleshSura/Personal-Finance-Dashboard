@@ -542,7 +542,7 @@ function handleBudgetFormSubmit(e) {
     e.target.reset();
 }
 // Patch the form submit event
-const budgetForm = document.getElementById('budget-form');
+let budgetForm = document.getElementById('budget-form');
 if (budgetForm) {
     budgetForm.onsubmit = handleBudgetFormSubmit;
 }
@@ -639,6 +639,10 @@ function renderBillsList() {
                     let statusClass = '';
                     if (status === 'overdue') statusClass = 'bill-status-overdue';
                     if (status === 'done') statusClass = 'bill-status-done';
+                    // Button: checkmark for not done, undo for done
+                    let toggleBtn = status === 'done'
+                        ? `<button class="btn btn-success" title="Mark as not done" onclick="toggleBillStatus('${bill.id}')">↩️</button>`
+                        : `<button class="btn btn-success" title="Mark as done" onclick="toggleBillStatus('${bill.id}')">✅</button>`;
                     return `
                     <tr>
                         <td>${bill.name}</td>
@@ -646,7 +650,7 @@ function renderBillsList() {
                         <td>${bill.date}</td>
                         <td class="${statusClass}">${status}</td>
                         <td>
-                            ${status !== 'done' ? `<button class="btn btn-success" onclick="completeBill('${bill.id}')">Completed</button>` : ''}
+                            ${toggleBtn}
                             <button class="btn btn-delete" onclick="deleteBill('${bill.id}')">Delete</button>
                         </td>
                     </tr>
@@ -657,14 +661,25 @@ function renderBillsList() {
     `;
 }
 
-window.completeBill = function(id) {
+window.toggleBillStatus = function(id) {
     const bills = Storage.getBills();
     const idx = bills.findIndex(b => b.id === id);
     if (idx !== -1) {
-        bills[idx].status = 'done';
+        if (bills[idx].status === 'done') {
+            bills[idx].status = 'upcoming';
+        } else {
+            bills[idx].status = 'done';
+        }
         Storage.saveBills(bills);
         renderBillsList();
     }
+};
+
+window.deleteBill = function(id) {
+    const bills = Storage.getBills();
+    const newBills = bills.filter(b => b.id !== id);
+    Storage.saveBills(newBills);
+    renderBillsList();
 };
 
 function renderGoalsPage() {
@@ -981,6 +996,10 @@ function renderBillsList() {
                     let statusClass = '';
                     if (status === 'overdue') statusClass = 'bill-status-overdue';
                     if (status === 'done') statusClass = 'bill-status-done';
+                    // Button: checkmark for not done, undo for done
+                    let toggleBtn = status === 'done'
+                        ? `<button class="btn btn-success" title="Mark as not done" onclick="toggleBillStatus('${bill.id}')">↩️</button>`
+                        : `<button class="btn btn-success" title="Mark as done" onclick="toggleBillStatus('${bill.id}')">✅</button>`;
                     return `
                     <tr>
                         <td>${bill.name}</td>
@@ -988,7 +1007,7 @@ function renderBillsList() {
                         <td>${bill.date}</td>
                         <td class="${statusClass}">${status}</td>
                         <td>
-                            ${status !== 'done' ? `<button class="btn btn-success" onclick="completeBill('${bill.id}')">Completed</button>` : ''}
+                            ${toggleBtn}
                             <button class="btn btn-delete" onclick="deleteBill('${bill.id}')">Delete</button>
                         </td>
                     </tr>
@@ -999,14 +1018,25 @@ function renderBillsList() {
     `;
 }
 
-window.completeBill = function(id) {
+window.toggleBillStatus = function(id) {
     const bills = Storage.getBills();
     const idx = bills.findIndex(b => b.id === id);
     if (idx !== -1) {
-        bills[idx].status = 'done';
+        if (bills[idx].status === 'done') {
+            bills[idx].status = 'upcoming';
+        } else {
+            bills[idx].status = 'done';
+        }
         Storage.saveBills(bills);
         renderBillsList();
     }
+};
+
+window.deleteBill = function(id) {
+    const bills = Storage.getBills();
+    const newBills = bills.filter(b => b.id !== id);
+    Storage.saveBills(newBills);
+    renderBillsList();
 };
 
 function renderGoalsPage() {
