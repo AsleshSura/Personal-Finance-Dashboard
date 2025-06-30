@@ -1,7 +1,11 @@
 /**
  * Utility functions for Personal Finance Dashboard
- * Includes formatting, ID generation, color helpers, and chart utilities.
- * All functions are pure and stateless.
+ *
+ * Cross-file integration:
+ * - Used by main.js for all formatting, ID generation, and chart helpers
+ * - Referenced in storage.js for data validation/logging
+ * - window.utils is global and used in index.html, main.js, and storage.js
+ * - See main.js and storage.js for usage examples
  */
 
 const utils = {
@@ -39,4 +43,12 @@ const utils = {
 // Export for browser global
 if (typeof window !== 'undefined') {
     window.utils = utils;
+    // Example cross-link: use Storage from storage.js if available
+    if (window.Storage) {
+        // Example: log the first transaction's formatted date if exists
+        const txs = window.Storage.getTransactions();
+        if (txs.length) {
+            console.log('First transaction date:', utils.formatDate(txs[0].date));
+        }
+    }
 }

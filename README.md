@@ -1,6 +1,30 @@
 # Personal Finance Dashboard
 
-A modern, privacy-first web app to manage your finances—track income, expenses, budgets, bills, goals, and more. Everything runs locally in your browser. No accounts, no tracking, no server required.
+---
+
+## Cross-File Integration Overview
+
+This project is fully modular and interconnected. Each file references and interacts with the others for a robust, maintainable codebase:
+
+- **index.html**: Loads all scripts (`storage.js`, `utils.js`, `main.js`) in order. All IDs/classes referenced in JS/CSS are present here. Dynamic content is rendered by `main.js` using helpers from `utils.js` and `storage.js`.
+- **main.js**: Main app logic. Uses `window.utils` (from `utils.js`) for formatting, ID generation, and chart helpers. Uses `window.Storage` (from `storage.js`) for all persistent data. All DOM elements referenced are defined in `index.html`.
+- **utils.js**: Utility functions. Used by `main.js` for formatting, ID generation, and chart helpers. References `window.Storage` for data validation/logging. Globally accessible as `window.utils`.
+- **storage.js**: LocalStorage CRUD helpers. Used by `main.js` for all persistent data. References `window.utils` for data validation/logging. Globally accessible as `window.Storage`.
+- **style.css**: Styles all IDs/classes referenced in `index.html` and `main.js`. All selectors are documented and cross-referenced in HTML and JS files.
+
+---
+
+## File Relationships
+
+- All scripts are loaded in order in `index.html`.
+- All global objects (`window.Storage`, `window.utils`) are referenced and documented in every relevant file.
+- Each file contains explicit comments and usage examples showing how it interacts with the others.
+
+---
+
+## For More Details
+
+See the top of each file for a summary of its cross-file integration and usage examples.
 
 ---
 

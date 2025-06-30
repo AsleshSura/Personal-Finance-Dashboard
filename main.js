@@ -155,30 +155,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Theme toggle (dark mode)
     const themeToggle = document.getElementById('theme-toggle');
     if (themeToggle) {
-        const root = document.documentElement;
-        function setTheme(theme) {
-            root.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-            const icon = themeToggle.querySelector('i');
-            if (theme === 'dark') {
-                icon.classList.remove('fa-sun');
-                icon.classList.add('fa-moon');
-            } else {
-                icon.classList.remove('fa-moon');
-                icon.classList.add('fa-sun');
-            }
+        // Set initial icon
+        function updateThemeIcon() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            themeToggle.innerHTML = isDark
+                ? '<i class="fas fa-sun"></i>'
+                : '<i class="fas fa-moon"></i>';
+            themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+            themeToggle.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
         }
-        // Always set theme on load
-        let savedTheme = localStorage.getItem('theme');
-        if (!savedTheme) {
-            savedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        setTheme(savedTheme);
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = root.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            setTheme(newTheme);
-            console.log('Theme toggled to:', newTheme);
+        updateThemeIcon();
+        themeToggle.onclick = function() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            updateThemeIcon();
+        };
+        // On load, respect saved theme
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+            updateThemeIcon();
         });
     }
 });
@@ -1198,6 +1195,55 @@ function showGoalModal() {
     };
 }
 
+// --- Recurring Options Rendering ---
+// Ensure recurring options (when/frequency) are rendered and handled
+function renderRecurringOptions() {
+    const container = document.getElementById('recurring-options');
+    if (!container) return;
+    container.innerHTML = `
+      <div class="recurring-row">
+        <div class="recurring-col">
+          <label for="recurring-interval">Every</label>
+          <input type="number" id="recurring-interval" name="recurring-interval" min="1" value="1" class="recurring-input">
+        </div>
+        <div class="recurring-col">
+          <label for="recurring-frequency" class="visually-hidden">Frequency</label>
+          <select id="recurring-frequency" name="recurring-frequency" class="recurring-input">
+            <option value="day">Day(s)</option>
+            <option value="week">Week(s)</option>
+            <option value="month">Month(s)</option>
+            <option value="year">Year(s)</option>
+          </select>
+        </div>
+        <div class="recurring-col recurring-next">
+          <label for="recurring-next-date">Next on</label>
+          <input type="date" id="recurring-next-date" name="recurring-next-date" class="recurring-input">
+        </div>
+      </div>
+    `;
+}
+// Show/hide recurring options based on checkbox
+const recurringCheckbox = document.getElementById('transaction-recurring');
+if (recurringCheckbox) {
+    recurringCheckbox.addEventListener('change', function() {
+        const options = document.getElementById('recurring-options');
+        if (this.checked) {
+            renderRecurringOptions();
+            options.style.display = 'flex';
+        } else {
+            options.innerHTML = '';
+            options.style.display = 'none';
+        }
+    });
+    // Initial state
+    if (recurringCheckbox.checked) {
+        renderRecurringOptions();
+        document.getElementById('recurring-options').style.display = 'flex';
+    } else {
+        document.getElementById('recurring-options').style.display = 'none';
+    }
+}
+
 // --- Transaction Templates ---
 const TEMPLATE_KEY = 'transactionTemplates';
 function getTemplates() {
@@ -1436,37 +1482,32 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- END REPORTS PAGE FUNCTIONALITY ---
 
 // --- BEGIN DARK MODE TOGGLE FUNCTIONALITY ---
-    // Theme toggle (dark mode)
-    const themeToggle = document.getElementById('theme-toggle');
-    if (themeToggle) {
-        // Set initial theme from localStorage or system preference
-        const root = document.documentElement;
-        function setTheme(theme) {
-            root.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-            // Optionally update icon
-            const icon = themeToggle.querySelector('i');
-            if (theme === 'dark') {
-                icon.classList.remove('fa-sun');
-                icon.classList.add('fa-moon');
-            } else {
-                icon.classList.remove('fa-moon');
-                icon.classList.add('fa-sun');
-            }
-        }
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            setTheme(savedTheme);
-        } else {
-            // Detect system preference
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            setTheme(prefersDark ? 'dark' : 'light');
-        }
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = root.getAttribute('data-theme');
-            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
-        });
+// --- Modern Theme Toggle Button Logic ---
+const themeToggleBtn = document.getElementById('theme-toggle');
+if (themeToggleBtn) {
+    // Set initial icon
+    function updateThemeIcon() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        themeToggleBtn.innerHTML = isDark
+            ? '<i class="fas fa-sun"></i>'
+            : '<i class="fas fa-moon"></i>';
+        themeToggleBtn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        themeToggleBtn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
     }
+    updateThemeIcon();
+    themeToggleBtn.onclick = function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        updateThemeIcon();
+    };
+    // On load, respect saved theme
+    document.addEventListener('DOMContentLoaded', () => {
+        const saved = localStorage.getItem('theme');
+        if (saved) document.documentElement.setAttribute('data-theme', saved);
+        updateThemeIcon();
+    });
+}
 // --- END DARK MODE TOGGLE FUNCTIONALITY ---
 
 // --- BEGIN BILL REMINDERS ---
@@ -1569,3 +1610,20 @@ document.addEventListener('keydown', e => {
     }
 });
 // --- END KEYBOARD SHORTCUTS ---
+
+// main.js - Main app logic for Personal Finance Dashboard
+//
+// Cross-file integration:
+// - Uses utils.js for all formatting, ID generation, and chart helpers (window.utils)
+// - Uses storage.js for all persistent data (window.Storage)
+// - All DOM elements referenced are defined in index.html
+// - Exports global objects for use in other scripts
+// - See utils.js and storage.js for usage examples
+//
+// Example cross-link: use a utility and storage helper together
+if (typeof window !== 'undefined' && window.utils && window.Storage) {
+    // Log the formatted balance of all transactions
+    const txs = window.Storage.getTransactions();
+    const total = txs.reduce((sum, tx) => sum + Number(tx.amount), 0);
+    console.log('Total transaction amount:', window.utils.formatCurrency(total));
+}

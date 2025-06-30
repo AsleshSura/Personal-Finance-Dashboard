@@ -1,4 +1,10 @@
 // storage.js - LocalStorage CRUD helpers for static Personal Finance Dashboard
+//
+// Cross-file integration:
+// - Used by main.js for all persistent data (transactions, budgets, bills, goals)
+// - Referenced in utils.js for data validation examples
+// - window.Storage is global and used in index.html, main.js, and utils.js
+// - See main.js for usage examples
 
 const Storage = {
     get(key, fallback = []) {
@@ -44,3 +50,9 @@ const Storage = {
 };
 
 window.Storage = Storage;
+
+// Example cross-link: use a utility from utils.js for demonstration
+if (typeof window !== 'undefined' && window.utils) {
+    // Example: log the number of transactions using a utility
+    console.log('Total transactions:', window.utils.formatCurrency(Storage.getTransactions().length));
+}
