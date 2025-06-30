@@ -69,6 +69,14 @@ body {
     justify-content: center;
     z-index: 9999;
     color: white;
+    opacity: 1;
+    pointer-events: all;
+    transition: opacity 0.5s;
+}
+
+.loading-screen.hide {
+    opacity: 0;
+    pointer-events: none;
 }
 
 .loading-spinner {
@@ -257,6 +265,85 @@ body {
 .btn-icon:hover {
     background: var(--bg-tertiary);
     color: var(--text-primary);
+}
+
+/* --- Final Polish & Accessibility Enhancements --- */
+
+/* Card hover/active effect */
+.card {
+    transition: box-shadow 0.2s, transform 0.15s;
+}
+.card:hover, .card:focus-within {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px) scale(1.015);
+    z-index: 1;
+}
+
+/* Button focus/hover for accessibility */
+.btn, .btn-icon {
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    outline: none;
+}
+.btn:focus, .btn-icon:focus {
+    box-shadow: 0 0 0 2px var(--primary-color), 0 1px 3px 0 rgba(0,0,0,0.08);
+    outline: none;
+}
+.btn:hover, .btn-icon:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 2px 8px 0 rgba(59,130,246,0.08);
+}
+
+/* Loading screen fade-out */
+.loading-screen {
+    opacity: 1;
+    pointer-events: all;
+    transition: opacity 0.5s;
+}
+.loading-screen.hide {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Notification container polish */
+.notifications {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 99999;
+    max-width: 350px;
+    width: 90vw;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    pointer-events: none;
+}
+.notifications > * {
+    pointer-events: auto;
+}
+
+/* Modal accessibility: focus ring */
+.modal-content:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Ensure sufficient contrast for dark mode buttons */
+[data-theme="dark"] .btn-primary {
+    background: var(--primary-dark);
+    color: #fff;
+}
+[data-theme="dark"] .btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+/* Utility: visually-hidden for a11y */
+.visually-hidden {
+    position: absolute !important;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0);
+    border: 0;
 }
 
 /* App Layout */
@@ -952,6 +1039,444 @@ body {
 }
 .budget-table .progress-bar-inner {
   background: var(--primary-color);
+}
+
+/* --- Improved Budget Table Action Buttons --- */
+.budget-table .actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+.budget-table .btn-edit {
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    width: 90px;
+    padding: 0.55rem 0;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0;
+    box-shadow: 0 1px 4px 0 rgba(59,130,246,0.08);
+    transition: background 0.15s, box-shadow 0.15s, color 0.15s;
+}
+.budget-table .btn-edit:hover, .budget-table .btn-edit:focus {
+    background: var(--primary-dark);
+    color: #fff;
+    box-shadow: 0 2px 8px 0 rgba(59,130,246,0.15);
+    outline: 2px solid var(--primary-dark);
+}
+.budget-table .btn-delete {
+    background: var(--danger-color);
+    color: #fff;
+    border: none;
+    width: 90px;
+    padding: 0.55rem 0;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0;
+    box-shadow: 0 1px 4px 0 rgba(239,68,68,0.08);
+    transition: background 0.15s, box-shadow 0.15s, color 0.15s;
+}
+.budget-table .btn-delete:hover, .budget-table .btn-delete:focus {
+    background: #b91c1c;
+    color: #fff;
+    box-shadow: 0 2px 8px 0 rgba(239,68,68,0.15);
+    outline: 2px solid #b91c1c;
+}
+
+/* Stack buttons vertically with spacing */
+.budget-table .actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* --- Budget List Card Styling --- */
+#budgets-list-card {
+    background: var(--bg-primary);
+    border-radius: 24px;
+    box-shadow: var(--shadow-lg);
+    padding: 2.5rem 2.5rem 2rem 2.5rem;
+    margin: 2.5rem auto 0 auto;
+    min-width: 400px;
+    max-width: 900px;
+    width: 90vw;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    color: var(--text-primary);
+    position: relative;
+}
+.budget-list-entry {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.7rem;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.10);
+    box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
+    border-left: 8px solid var(--success-color);
+    padding: 1.2rem 1.5rem 1.2rem 1.2rem;
+    margin-bottom: 0;
+    font-size: 1.13rem;
+    font-weight: 500;
+    transition: background 0.18s, box-shadow 0.18s;
+}
+.budget-list-entry:nth-child(2n) {
+    border-left-color: var(--warning-color);
+    background: rgba(255,255,255,0.16);
+}
+.budget-list-entry:nth-child(3n) {
+    border-left-color: var(--danger-color);
+    background: rgba(255,255,255,0.22);
+}
+.budget-list-entry .budget-info {
+    font-size: 1.18rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    color: #fff;
+}
+.budget-list-entry .actions {
+    flex-direction: row;
+    gap: 1.1rem;
+    margin-top: 0.1rem;
+}
+.budget-list-entry .btn-edit {
+    background: #fff;
+    color: var(--primary-color);
+    font-weight: 600;
+    border: none;
+    box-shadow: 0 1px 4px 0 rgba(59,130,246,0.10);
+}
+.budget-list-entry .btn-edit:hover, .budget-list-entry .btn-edit:focus {
+    background: var(--primary-dark);
+    color: #fff;
+}
+.budget-list-entry .btn-delete {
+    background: var(--danger-color) !important;
+    color: #fff !important;
+    font-weight: 600;
+    border: none;
+    box-shadow: 0 1px 4px 0 rgba(239,68,68,0.10);
+    transition: background 0.15s, color 0.15s;
+}
+.budget-list-entry .btn-delete:hover, .budget-list-entry .btn-delete:focus {
+    background: #b91c1c !important;
+    color: #fff !important;
+}
+@media (max-width: 700px) {
+    #budgets-list-card {
+        padding: 1.2rem 0.5rem;
+        min-width: unset;
+        max-width: 99vw;
+    }
+    .budget-list-entry {
+        padding: 1rem 0.7rem 1rem 0.7rem;
+    }
+}
+
+/* --- Fix Budget List Entry Text Color for Light Background --- */
+.budget-list-entry,
+.budget-list-entry .budget-info {
+    color: var(--text-primary) !important;
+}
+.budget-list-entry .btn-edit {
+    color: var(--primary-color) !important;
+}
+.budget-list-entry .btn-delete {
+    color: #fff !important;
+}
+
+/* --- Lighten Budget Card and Entries in Dark Mode --- */
+[data-theme="dark"] #budgets-list-card {
+    background: var(--bg-secondary);
+}
+[data-theme="dark"] .budget-list-entry {
+    background: var(--bg-tertiary);
+}
+
+/* --- Center and Polish Budget Table --- */
+#budgets-list-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+    border-radius: 24px;
+    padding: 2.5rem 2.5rem 2rem 2.5rem;
+    margin: 2.5rem auto 0 auto;
+    min-width: 400px;
+    max-width: 900px;
+    width: 90vw;
+    background: var(--bg-secondary);
+}
+.budget-table {
+    width: 100%;
+    max-width: 800px;
+    border-collapse: separate;
+    border-spacing: 0 0.5rem;
+    background: none;
+    margin: 0 auto;
+}
+.budget-table th, .budget-table td {
+    padding: 1rem 1.2rem;
+    text-align: center;
+    font-size: 1.13rem;
+}
+.budget-table th {
+    font-size: 1.22rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: none;
+    border-bottom: 2px solid var(--border-color);
+}
+.budget-table td {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    vertical-align: middle;
+    box-shadow: none;
+    border-radius: 0;
+    transition: background 0.15s;
+}
+.budget-table tr {
+    box-shadow: 0 2px 8px 0 rgba(59,130,246,0.08);
+    background: none;
+}
+.budget-table tr:hover td {
+    background: var(--bg-primary);
+}
+.budget-table tr td:first-child {
+    border-top-left-radius: 16px;
+    border-bottom-left-radius: 16px;
+}
+.budget-table tr td:last-child {
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+.budget-table tbody tr {
+    background: none;
+}
+.budget-table tbody tr td {
+    border-top: none;
+    border-bottom: none;
+}
+@media (max-width: 700px) {
+    #budgets-list-card {
+        padding: 1.2rem 0.5rem;
+        min-width: unset;
+        max-width: 99vw;
+    }
+    .budget-table th, .budget-table td {
+        padding: 0.7rem 0.3rem;
+        font-size: 1rem;
+    }
+    .budget-table th {
+        font-size: 1.08rem;
+    }
+}
+
+/* --- Centered, Modern Bills Placeholder --- */
+.bills-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    width: 100%;
+    font-size: 1.6rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    text-align: center;
+    margin-top: 2rem;
+}
+.bills-placeholder-card {
+    background: var(--bg-primary);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 2.5rem 3rem;
+    margin-top: 1.5rem;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+/* --- Bills Section Modern Card/Table Styling --- */
+.bills-card {
+    background: var(--bg-secondary);
+    border-radius: 24px;
+    box-shadow: var(--shadow-lg);
+    padding: 2.5rem 2.5rem 2rem 2.5rem;
+    margin: 2.5rem auto 0 auto;
+    min-width: 400px;
+    max-width: 900px;
+    width: 90vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.bills-header-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+.bills-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+.bills-table {
+    width: 100%;
+    max-width: 800px;
+    border-collapse: separate;
+    border-spacing: 0 0.5rem;
+    background: none;
+    margin: 0 auto;
+}
+.bills-table th, .bills-table td {
+    padding: 1rem 1.2rem;
+    text-align: center;
+    font-size: 1.13rem;
+}
+.bills-table th {
+    font-size: 1.22rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: none;
+    border-bottom: 2px solid var(--border-color);
+}
+.bills-table td {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    vertical-align: middle;
+    box-shadow: none;
+    border-radius: 0;
+    transition: background 0.15s;
+}
+.bills-table tr {
+    box-shadow: 0 2px 8px 0 rgba(59,130,246,0.08);
+    background: none;
+}
+.bills-table tr:hover td {
+    background: var(--bg-primary);
+}
+.bills-table tr td:first-child {
+    border-top-left-radius: 16px;
+    border-bottom-left-radius: 16px;
+}
+.bills-table tr td:last-child {
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+.bills-table tbody tr {
+    background: none;
+}
+.bills-table tbody tr td {
+    border-top: none;
+    border-bottom: none;
+}
+.bills-empty {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    text-align: center;
+    margin: 2.5rem 0;
+}
+/* Modal for Add Bill */
+#bill-modal.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.25);
+    align-items: center;
+    justify-content: center;
+}
+#bill-modal.show {
+    display: flex;
+}
+#bill-modal .modal-content {
+    background: var(--bg-primary);
+    border-radius: 18px;
+    box-shadow: var(--shadow-lg);
+    padding: 2.5rem 2.5rem 2rem 2.5rem;
+    min-width: 320px;
+    max-width: 400px;
+    width: 95vw;
+}
+#bill-modal .modal-header h2 {
+    margin: 0 0 1.2rem 0;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+#bill-modal .form-group label {
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+    display: block;
+}
+#bill-modal .form-group input {
+    width: 100%;
+    padding: 0.7rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+#bill-modal .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.2rem;
+}
+@media (max-width: 700px) {
+    .bills-card {
+        padding: 1.2rem 0.5rem;
+        min-width: unset;
+        max-width: 99vw;
+    }
+    .bills-table th, .bills-table td {
+        padding: 0.7rem 0.3rem;
+        font-size: 1rem;
+    }
+    .bills-table th {
+        font-size: 1.08rem;
+    }
+}
+
+/* --- Bill Status Styles and Completed Button --- */
+.bill-status-overdue {
+    color: var(--danger-color);
+    font-weight: 700;
+    text-transform: capitalize;
+}
+.bill-status-done {
+    color: var(--success-color);
+    font-weight: 700;
+    text-transform: capitalize;
+}
+.bills-table .btn-success {
+    background: var(--success-color);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 1.2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-right: 0.5rem;
+    transition: background 0.15s;
+}
+.bills-table .btn-success:hover, .bills-table .btn-success:focus {
+    background: #059669;
 }
 
 /* Utility Classes */

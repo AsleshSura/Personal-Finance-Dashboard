@@ -235,34 +235,21 @@ function handleTransactionForm() {
     };
 }
 
-function renderCategoryChart() {
-    const ctx = document.getElementById('category-chart');
-    if (!ctx) return;
-    const txs = window.app.getTransactions().filter(tx => tx.type === 'expense');
-    const data = {};
-    txs.forEach(tx => {
-        data[tx.category] = (data[tx.category] || 0) + parseFloat(tx.amount);
-    });
-    const categories = Object.keys(data);
-    const amounts = Object.values(data);
-    if (window.categoryChart) window.categoryChart.destroy();
-    window.categoryChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: categories,
-            datasets: [{
-                data: amounts,
-                backgroundColor: [
-                    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#64748b', '#a78bfa', '#f472b6', '#facc15', '#34d399', '#60a5fa'
-                ],
-            }]
-        },
-        options: {
-            plugins: { legend: { labels: { color: getComputedStyle(document.body).getPropertyValue('--text-primary') } } },
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
+function getChartFontColor() {
+    return getComputedStyle(document.body).getPropertyValue('--text-primary') || '#1e293b';
+}
+function getChartFontSize() {
+    return parseFloat(getComputedStyle(document.body).getPropertyValue('--chart-font-size')) || 16;
+}
+function getBarLabelColor(ctx) {
+    // Use white for dark bars, dark for light bars
+    const bg = ctx.dataset.backgroundColor[ctx.dataIndex] || ctx.dataset.backgroundColor;
+    // Simple luminance check for RGB(A)
+    let rgb = bg.match(/\d+/g);
+    if (!rgb) return '#222';
+    let [r, g, b] = rgb;
+    let luminance = (0.299 * r + 0.587 * g + 0.114 * b);
+    return luminance < 140 ? '#fff' : '#222';
 }
 
 function renderIncomeExpenseChart() {
@@ -280,20 +267,88 @@ function renderIncomeExpenseChart() {
         data: {
             labels: ['Income', 'Expenses'],
             datasets: [{
-                label: 'Amount',
                 data: [income, expenses],
-                backgroundColor: [ '#10b981', '#ef4444' ]
+                backgroundColor: [
+                    'rgba(16, 185, 129, 0.9)', // green
+                    'rgba(239, 68, 68, 0.9)'   // red
+                ],
+                borderRadius: 6,
+                maxBarThickness: 60
             }]
         },
         options: {
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-primary') } },
-                y: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-primary') } }
+            plugins: {
+                legend: { display: false },
+                datalabels: { display: false }
             },
-            responsive: true,
-            maintainAspectRatio: false
-        }
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: getChartFontColor(), font: { size: 20 } }
+                },
+                y: {
+                    grid: { color: 'rgba(100,116,139,0.12)' },
+                    ticks: {
+                        color: getChartFontColor(),
+                        font: { size: 20 },
+                        beginAtZero: true,
+                        callback: function(value) {
+                            return '$' + Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        }
+                    }
+                }
+            }
+        },
+        plugins: []
+    });
+}
+
+function renderCategoryChart() {
+    const ctx = document.getElementById('category-chart');
+    if (!ctx) return;
+    const txs = window.app.getTransactions().filter(tx => tx.type === 'expense');
+    const data = {};
+    txs.forEach(tx => {
+        data[tx.category] = (data[tx.category] || 0) + parseFloat(tx.amount);
+    });
+    const categories = Object.keys(data);
+    const amounts = Object.values(data);
+    if (window.categoryChart) window.categoryChart.destroy();
+    window.categoryChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: categories,
+            datasets: [{
+                data: amounts,
+                backgroundColor: categories.map((_, i) => i % 2 === 0 ? 'rgba(16,185,129,0.9)' : 'rgba(239,68,68,0.9)'),
+                borderRadius: 6,
+                maxBarThickness: 60
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { display: false },
+                datalabels: { display: false }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: getChartFontColor(), font: { size: 20 } }
+                },
+                y: {
+                    grid: { color: 'rgba(100,116,139,0.12)' },
+                    ticks: {
+                        color: getChartFontColor(),
+                        font: { size: 20 },
+                        beginAtZero: true,
+                        callback: function(value) {
+                            return '$' + Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        }
+                    }
+                }
+            }
+        },
+        plugins: []
     });
 }
 
@@ -383,68 +438,60 @@ function renderBudgetsPage() {
 }
 
 function renderBudgetsList() {
-    const list = document.getElementById('budgets-list');
-    if (!list) return;
-    // Remove duplicate budgets (same category and period)
-    const budgetsRaw = window.app.state.budgets || [];
+    const container = document.getElementById('budgets-list');
+    if (!container) return;
+    container.innerHTML = '';
+    const budgets = (window.app.state.budgets || []);
+    // Remove duplicates by category (keep first occurrence)
     const uniqueBudgets = [];
     const seen = new Set();
-    for (const b of budgetsRaw) {
-        const key = b.category + '|' + b.period;
-        if (!seen.has(key)) {
+    for (const b of budgets) {
+        if (!seen.has(b.category)) {
             uniqueBudgets.push(b);
-            seen.add(key);
+            seen.add(b.category);
         }
     }
-    // If duplicates were found and removed, update storage
-    if (uniqueBudgets.length !== budgetsRaw.length) {
-        window.app.state.budgets = uniqueBudgets;
-        Storage.saveBudgets(uniqueBudgets);
-    }
-    const txs = window.app.getTransactions();
     if (uniqueBudgets.length === 0) {
-        list.innerHTML = '<div class="empty-state"><p>No budgets set. Add one above!</p></div>';
+        container.innerHTML = '<div id="budgets-list-card"><div class="text-center">No budgets set yet.</div></div>';
         return;
     }
-    list.innerHTML = `
-    <div style="display:flex;justify-content:center;">
-      <table class="budget-table w-full" style="margin:2rem auto;min-width:700px;box-shadow:0 2px 12px #0001;border-radius:12px;overflow:hidden;background:var(--bg-primary);">
-        <thead style="background:var(--bg-tertiary);">
-          <tr>
-            <th>Category</th>
-            <th>Amount</th>
-            <th>Period</th>
-            <th>Spent</th>
-            <th>Actions</th>
-          </tr>
+    // Get all transactions for spent calculation
+    const transactions = window.app.getTransactions ? window.app.getTransactions() : [];
+    // Render the table dynamically
+    const table = document.createElement('table');
+    table.className = 'budget-table';
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Spent</th>
+                <th>Actions</th>
+            </tr>
         </thead>
         <tbody>
-        ${uniqueBudgets.map(b => {
-            const spent = txs.filter(tx => tx.category === b.category && tx.type === 'expense')
-                .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
-            const percent = Math.round((spent/b.amount)*100)||0;
-            const periodLabel = b.period.charAt(0).toUpperCase() + b.period.slice(1);
-            return `<tr style="text-align:center;">
-                <td>${b.category}</td>
-                <td>${utils.formatCurrency(b.amount)}</td>
-                <td>${periodLabel}</td>
-                <td>
-                  <div style="display:flex;flex-direction:column;align-items:center;">
-                    <span>${utils.formatCurrency(spent)} <span style="color:${percent>100?'var(--danger-color)':'var(--primary-color)'};font-weight:bold;">(${percent}%)</span></span>
-                    <div class="progress-bar" style="width:100px;height:8px;background:#e2e8f0;border-radius:4px;margin-top:6px;">
-                      <div class="progress-bar-inner" style="height:8px;border-radius:4px;background:${percent>100?'var(--danger-color)':'var(--primary-color)'};width:${Math.min(percent,120)}%;transition:width .3s;"></div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <button class="btn btn-secondary btn-sm" style="padding:0.5rem 1.2rem;font-size:1rem;border-radius:8px;margin-bottom:0.5rem;" onclick="editBudget('${b.id}')">Edit</button><br>
-                  <button class="btn btn-danger btn-sm" style="padding:0.5rem 1.2rem;font-size:1rem;border-radius:8px;" onclick="deleteBudget('${b.id}')">Delete</button>
-                </td>
-            </tr>`;
-        }).join('')}
+            ${uniqueBudgets.map(budget => {
+                // Calculate spent for this category
+                const spent = transactions
+                    .filter(tx => tx.type === 'expense' && tx.category === budget.category)
+                    .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+                return `
+                <tr>
+                    <td>${budget.category}</td>
+                    <td>${window.utils.formatCurrency(budget.amount)}</td>
+                    <td>${window.utils.formatCurrency(spent)}</td>
+                    <td>
+                        <button class="btn btn-edit" onclick="editBudget('${budget.id}')">Edit</button>
+                        <button class="btn btn-delete" onclick="deleteBudget('${budget.id}')">Delete</button>
+                    </td>
+                </tr>`;
+            }).join('')}
         </tbody>
-      </table>
-    </div>`;
+    `;
+    const card = document.createElement('div');
+    card.id = 'budgets-list-card';
+    card.appendChild(table);
+    container.appendChild(card);
 }
 
 window.editBudget = function(id) {
@@ -461,40 +508,164 @@ window.editBudget = function(id) {
     if (addBtn) addBtn.textContent = 'Update Budget';
 };
 
-// Patch the form submit to handle edit mode
-document.addEventListener('DOMContentLoaded', () => {
-    // ...existing code...
-    // Patch budget form submit for edit
-    const form = document.getElementById('budget-form');
-    if (form) {
-        form.onsubmit = function(e) {
-            e.preventDefault();
-            const category = form['budget-category'].value;
-            const amount = parseFloat(form['budget-amount'].value);
-            const period = form['budget-period'].value;
-            if (!category || !amount || !period) return;
-            if (window.budgetEditId) {
-                // Update existing budget
-                window.app.state.budgets.push({ id: window.budgetEditId, category, amount, period });
-                window.budgetEditId = null;
-                const addBtn = document.querySelector('.budget-add-btn');
-                if (addBtn) addBtn.textContent = 'Add Budget';
-            } else {
-                // Add new budget
-                window.app.state.budgets.push({ id: utils.generateId(), category, amount, period });
-            }
-            Storage.saveBudgets(window.app.state.budgets);
-            renderBudgetsList();
-            form.reset();
-        };
+// Ensure deleteBudget is globally available
+window.deleteBudget = function(id) {
+    const budgets = window.app.state.budgets || [];
+    const newBudgets = budgets.filter(b => b.id !== id);
+    window.app.state.budgets = newBudgets;
+    Storage.saveBudgets(newBudgets);
+    renderBudgetsList();
+};
+
+// Prevent duplicate budgets on add
+function handleBudgetFormSubmit(e) {
+    e.preventDefault();
+    const category = document.getElementById('budget-category').value;
+    const amount = parseFloat(document.getElementById('budget-amount').value);
+    const period = document.getElementById('budget-period').value;
+    if (!category || isNaN(amount) || !period) return;
+    const budgets = window.app.state.budgets || [];
+    if (budgets.some(b => b.category === category)) {
+        NotificationService.showError('A budget for this category already exists.');
+        return;
     }
-});
+    const newBudget = {
+        id: utils.generateId(),
+        category,
+        amount,
+        period
+    };
+    budgets.push(newBudget);
+    window.app.state.budgets = budgets;
+    Storage.saveBudgets(budgets);
+    renderBudgetsList();
+    e.target.reset();
+}
+// Patch the form submit event
+const budgetForm = document.getElementById('budget-form');
+if (budgetForm) {
+    budgetForm.onsubmit = handleBudgetFormSubmit;
+}
 
 function renderBillsPage() {
     const page = document.getElementById('bills-page');
     if (!page) return;
-    page.innerHTML = '<h2>Bills</h2><div class="empty-state"><p>Bill reminders coming soon!</p></div>';
+    // Card container
+    let bills = Storage.getBills();
+    page.innerHTML = `
+        <div class="bills-card">
+            <div class="bills-header-row">
+                <h2 class="bills-title">Bills</h2>
+                <button class="btn btn-primary" id="add-bill-btn">+ Add Bill</button>
+            </div>
+            <div id="bills-list"></div>
+        </div>
+        <div id="bill-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header"><h2>Add Bill</h2></div>
+                <form id="bill-form" class="modal-body">
+                    <div class="form-group">
+                        <label for="bill-name">Name</label>
+                        <input type="text" id="bill-name" name="name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="bill-amount">Amount</label>
+                        <input type="number" id="bill-amount" name="amount" step="0.01" min="0.01" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="bill-date">Due Date</label>
+                        <input type="date" id="bill-date" name="date" required />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancel-bill">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Bill</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    renderBillsList();
+    // Modal logic
+    document.getElementById('add-bill-btn').onclick = () => {
+        document.getElementById('bill-modal').classList.add('show');
+    };
+    document.getElementById('cancel-bill').onclick = () => {
+        document.getElementById('bill-modal').classList.remove('show');
+    };
+    document.getElementById('bill-modal').onclick = (e) => {
+        if (e.target === e.currentTarget) {
+            e.currentTarget.classList.remove('show');
+        }
+    };
+    document.getElementById('bill-form').onsubmit = function(e) {
+        e.preventDefault();
+        const name = document.getElementById('bill-name').value.trim();
+        const amount = parseFloat(document.getElementById('bill-amount').value);
+        const date = document.getElementById('bill-date').value;
+        if (!name || isNaN(amount) || !date) return;
+        const bills = Storage.getBills();
+        bills.push({ id: utils.generateId(), name, amount, date, status: 'upcoming' });
+        Storage.saveBills(bills);
+        renderBillsList();
+        document.getElementById('bill-modal').classList.remove('show');
+        e.target.reset();
+    };
 }
+
+function renderBillsList() {
+    const container = document.getElementById('bills-list');
+    if (!container) return;
+    const bills = Storage.getBills();
+    if (!bills.length) {
+        container.innerHTML = '<div class="bills-empty">No bills yet. Add one to get started!</div>';
+        return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    container.innerHTML = `
+        <table class="bills-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Amount</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${bills.map(bill => {
+                    let status = bill.status || 'upcoming';
+                    if (status !== 'done' && bill.date < today) status = 'overdue';
+                    let statusClass = '';
+                    if (status === 'overdue') statusClass = 'bill-status-overdue';
+                    if (status === 'done') statusClass = 'bill-status-done';
+                    return `
+                    <tr>
+                        <td>${bill.name}</td>
+                        <td>${window.utils.formatCurrency(bill.amount)}</td>
+                        <td>${bill.date}</td>
+                        <td class="${statusClass}">${status}</td>
+                        <td>
+                            ${status !== 'done' ? `<button class="btn btn-success" onclick="completeBill('${bill.id}')">Completed</button>` : ''}
+                            <button class="btn btn-delete" onclick="deleteBill('${bill.id}')">Delete</button>
+                        </td>
+                    </tr>
+                    `;
+                }).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+window.completeBill = function(id) {
+    const bills = Storage.getBills();
+    const idx = bills.findIndex(b => b.id === id);
+    if (idx !== -1) {
+        bills[idx].status = 'done';
+        Storage.saveBills(bills);
+        renderBillsList();
+    }
+};
 
 function renderGoalsPage() {
     const page = document.getElementById('goals-page');
@@ -609,68 +780,60 @@ function renderBudgetsPage() {
 }
 
 function renderBudgetsList() {
-    const list = document.getElementById('budgets-list');
-    if (!list) return;
-    // Remove duplicate budgets (same category and period)
-    const budgetsRaw = window.app.state.budgets || [];
+    const container = document.getElementById('budgets-list');
+    if (!container) return;
+    container.innerHTML = '';
+    const budgets = (window.app.state.budgets || []);
+    // Remove duplicates by category (keep first occurrence)
     const uniqueBudgets = [];
     const seen = new Set();
-    for (const b of budgetsRaw) {
-        const key = b.category + '|' + b.period;
-        if (!seen.has(key)) {
+    for (const b of budgets) {
+        if (!seen.has(b.category)) {
             uniqueBudgets.push(b);
-            seen.add(key);
+            seen.add(b.category);
         }
     }
-    // If duplicates were found and removed, update storage
-    if (uniqueBudgets.length !== budgetsRaw.length) {
-        window.app.state.budgets = uniqueBudgets;
-        Storage.saveBudgets(uniqueBudgets);
-    }
-    const txs = window.app.getTransactions();
     if (uniqueBudgets.length === 0) {
-        list.innerHTML = '<div class="empty-state"><p>No budgets set. Add one above!</p></div>';
+        container.innerHTML = '<div id="budgets-list-card"><div class="text-center">No budgets set yet.</div></div>';
         return;
     }
-    list.innerHTML = `
-    <div style="display:flex;justify-content:center;">
-      <table class="budget-table w-full" style="margin:2rem auto;min-width:700px;box-shadow:0 2px 12px #0001;border-radius:12px;overflow:hidden;background:var(--bg-primary);">
-        <thead style="background:var(--bg-tertiary);">
-          <tr>
-            <th>Category</th>
-            <th>Amount</th>
-            <th>Period</th>
-            <th>Spent</th>
-            <th>Actions</th>
-          </tr>
+    // Get all transactions for spent calculation
+    const transactions = window.app.getTransactions ? window.app.getTransactions() : [];
+    // Render the table dynamically
+    const table = document.createElement('table');
+    table.className = 'budget-table';
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Spent</th>
+                <th>Actions</th>
+            </tr>
         </thead>
         <tbody>
-        ${uniqueBudgets.map(b => {
-            const spent = txs.filter(tx => tx.category === b.category && tx.type === 'expense')
-                .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
-            const percent = Math.round((spent/b.amount)*100)||0;
-            const periodLabel = b.period.charAt(0).toUpperCase() + b.period.slice(1);
-            return `<tr style="text-align:center;">
-                <td>${b.category}</td>
-                <td>${utils.formatCurrency(b.amount)}</td>
-                <td>${periodLabel}</td>
-                <td>
-                  <div style="display:flex;flex-direction:column;align-items:center;">
-                    <span>${utils.formatCurrency(spent)} <span style="color:${percent>100?'var(--danger-color)':'var(--primary-color)'};font-weight:bold;">(${percent}%)</span></span>
-                    <div class="progress-bar" style="width:100px;height:8px;background:#e2e8f0;border-radius:4px;margin-top:6px;">
-                      <div class="progress-bar-inner" style="height:8px;border-radius:4px;background:${percent>100?'var(--danger-color)':'var(--primary-color)'};width:${Math.min(percent,120)}%;transition:width .3s;"></div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <button class="btn btn-secondary btn-sm" style="padding:0.5rem 1.2rem;font-size:1rem;border-radius:8px;margin-bottom:0.5rem;" onclick="editBudget('${b.id}')">Edit</button><br>
-                  <button class="btn btn-danger btn-sm" style="padding:0.5rem 1.2rem;font-size:1rem;border-radius:8px;" onclick="deleteBudget('${b.id}')">Delete</button>
-                </td>
-            </tr>`;
-        }).join('')}
+            ${uniqueBudgets.map(budget => {
+                // Calculate spent for this category
+                const spent = transactions
+                    .filter(tx => tx.type === 'expense' && tx.category === budget.category)
+                    .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+                return `
+                <tr>
+                    <td>${budget.category}</td>
+                    <td>${window.utils.formatCurrency(budget.amount)}</td>
+                    <td>${window.utils.formatCurrency(spent)}</td>
+                    <td>
+                        <button class="btn btn-edit" onclick="editBudget('${budget.id}')">Edit</button>
+                        <button class="btn btn-delete" onclick="deleteBudget('${budget.id}')">Delete</button>
+                    </td>
+                </tr>`;
+            }).join('')}
         </tbody>
-      </table>
-    </div>`;
+    `;
+    const card = document.createElement('div');
+    card.id = 'budgets-list-card';
+    card.appendChild(table);
+    container.appendChild(card);
 }
 
 window.editBudget = function(id) {
@@ -687,40 +850,164 @@ window.editBudget = function(id) {
     if (addBtn) addBtn.textContent = 'Update Budget';
 };
 
-// Patch the form submit to handle edit mode
-document.addEventListener('DOMContentLoaded', () => {
-    // ...existing code...
-    // Patch budget form submit for edit
-    const form = document.getElementById('budget-form');
-    if (form) {
-        form.onsubmit = function(e) {
-            e.preventDefault();
-            const category = form['budget-category'].value;
-            const amount = parseFloat(form['budget-amount'].value);
-            const period = form['budget-period'].value;
-            if (!category || !amount || !period) return;
-            if (window.budgetEditId) {
-                // Update existing budget
-                window.app.state.budgets.push({ id: window.budgetEditId, category, amount, period });
-                window.budgetEditId = null;
-                const addBtn = document.querySelector('.budget-add-btn');
-                if (addBtn) addBtn.textContent = 'Add Budget';
-            } else {
-                // Add new budget
-                window.app.state.budgets.push({ id: utils.generateId(), category, amount, period });
-            }
-            Storage.saveBudgets(window.app.state.budgets);
-            renderBudgetsList();
-            form.reset();
-        };
+// Ensure deleteBudget is globally available
+window.deleteBudget = function(id) {
+    const budgets = window.app.state.budgets || [];
+    const newBudgets = budgets.filter(b => b.id !== id);
+    window.app.state.budgets = newBudgets;
+    Storage.saveBudgets(newBudgets);
+    renderBudgetsList();
+};
+
+// Prevent duplicate budgets on add
+function handleBudgetFormSubmit(e) {
+    e.preventDefault();
+    const category = document.getElementById('budget-category').value;
+    const amount = parseFloat(document.getElementById('budget-amount').value);
+    const period = document.getElementById('budget-period').value;
+    if (!category || isNaN(amount) || !period) return;
+    const budgets = window.app.state.budgets || [];
+    if (budgets.some(b => b.category === category)) {
+        NotificationService.showError('A budget for this category already exists.');
+        return;
     }
-});
+    const newBudget = {
+        id: utils.generateId(),
+        category,
+        amount,
+        period
+    };
+    budgets.push(newBudget);
+    window.app.state.budgets = budgets;
+    Storage.saveBudgets(budgets);
+    renderBudgetsList();
+    e.target.reset();
+}
+// Patch the form submit event
+budgetForm = document.getElementById('budget-form');
+if (budgetForm) {
+    budgetForm.onsubmit = handleBudgetFormSubmit;
+}
 
 function renderBillsPage() {
     const page = document.getElementById('bills-page');
     if (!page) return;
-    page.innerHTML = '<h2>Bills</h2><div class="empty-state"><p>Bill reminders coming soon!</p></div>';
+    // Card container
+    let bills = Storage.getBills();
+    page.innerHTML = `
+        <div class="bills-card">
+            <div class="bills-header-row">
+                <h2 class="bills-title">Bills</h2>
+                <button class="btn btn-primary" id="add-bill-btn">+ Add Bill</button>
+            </div>
+            <div id="bills-list"></div>
+        </div>
+        <div id="bill-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header"><h2>Add Bill</h2></div>
+                <form id="bill-form" class="modal-body">
+                    <div class="form-group">
+                        <label for="bill-name">Name</label>
+                        <input type="text" id="bill-name" name="name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="bill-amount">Amount</label>
+                        <input type="number" id="bill-amount" name="amount" step="0.01" min="0.01" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="bill-date">Due Date</label>
+                        <input type="date" id="bill-date" name="date" required />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancel-bill">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Bill</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    renderBillsList();
+    // Modal logic
+    document.getElementById('add-bill-btn').onclick = () => {
+        document.getElementById('bill-modal').classList.add('show');
+    };
+    document.getElementById('cancel-bill').onclick = () => {
+        document.getElementById('bill-modal').classList.remove('show');
+    };
+    document.getElementById('bill-modal').onclick = (e) => {
+        if (e.target === e.currentTarget) {
+            e.currentTarget.classList.remove('show');
+        }
+    };
+    document.getElementById('bill-form').onsubmit = function(e) {
+        e.preventDefault();
+        const name = document.getElementById('bill-name').value.trim();
+        const amount = parseFloat(document.getElementById('bill-amount').value);
+        const date = document.getElementById('bill-date').value;
+        if (!name || isNaN(amount) || !date) return;
+        const bills = Storage.getBills();
+        bills.push({ id: utils.generateId(), name, amount, date, status: 'upcoming' });
+        Storage.saveBills(bills);
+        renderBillsList();
+        document.getElementById('bill-modal').classList.remove('show');
+        e.target.reset();
+    };
 }
+
+function renderBillsList() {
+    const container = document.getElementById('bills-list');
+    if (!container) return;
+    const bills = Storage.getBills();
+    if (!bills.length) {
+        container.innerHTML = '<div class="bills-empty">No bills yet. Add one to get started!</div>';
+        return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    container.innerHTML = `
+        <table class="bills-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Amount</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${bills.map(bill => {
+                    let status = bill.status || 'upcoming';
+                    if (status !== 'done' && bill.date < today) status = 'overdue';
+                    let statusClass = '';
+                    if (status === 'overdue') statusClass = 'bill-status-overdue';
+                    if (status === 'done') statusClass = 'bill-status-done';
+                    return `
+                    <tr>
+                        <td>${bill.name}</td>
+                        <td>${window.utils.formatCurrency(bill.amount)}</td>
+                        <td>${bill.date}</td>
+                        <td class="${statusClass}">${status}</td>
+                        <td>
+                            ${status !== 'done' ? `<button class="btn btn-success" onclick="completeBill('${bill.id}')">Completed</button>` : ''}
+                            <button class="btn btn-delete" onclick="deleteBill('${bill.id}')">Delete</button>
+                        </td>
+                    </tr>
+                    `;
+                }).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+window.completeBill = function(id) {
+    const bills = Storage.getBills();
+    const idx = bills.findIndex(b => b.id === id);
+    if (idx !== -1) {
+        bills[idx].status = 'done';
+        Storage.saveBills(bills);
+        renderBillsList();
+    }
+};
 
 function renderGoalsPage() {
     const page = document.getElementById('goals-page');
