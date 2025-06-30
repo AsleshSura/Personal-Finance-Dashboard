@@ -79,6 +79,16 @@ Before running this application, make sure you have the following installed:
 - [MongoDB](https://www.mongodb.com/) (v4.4 or higher)
 - [npm](https://www.npmjs.com/) (v6 or higher)
 
+## 🔒 Security Notice
+
+**⚠️ IMPORTANT:** This repository follows security best practices:
+- No real credentials are committed to the repository
+- All sensitive data uses environment variables
+- Examples use placeholder values only
+- See `SECURITY.md` for detailed security guidelines
+
+**Before deploying:** Always use your own secure credentials and never commit real secrets to version control.
+
 ## ⚡ Quick Start
 
 ### 🌐 Try the Demo (GitHub Pages)

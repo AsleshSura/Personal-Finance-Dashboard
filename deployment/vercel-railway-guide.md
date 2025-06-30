@@ -15,11 +15,16 @@
 #### Environment Variables:
 ```
 NODE_ENV=production
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/finance_dashboard
+MONGODB_URI=mongodb+srv://YOUR_USERNAME:YOUR_PASSWORD@YOUR_CLUSTER.mongodb.net/finance_dashboard
 JWT_SECRET=your-super-secure-jwt-secret-here
 PORT=8080
 FRONTEND_URL=https://your-app.vercel.app
 ```
+
+**⚠️ SECURITY WARNING:**
+- Replace `YOUR_USERNAME`, `YOUR_PASSWORD`, and `YOUR_CLUSTER` with your actual MongoDB Atlas credentials
+- Never commit real credentials to your repository
+- Use Railway's environment variables dashboard to set these securely
 
 ### 2. Database on MongoDB Atlas
 1. Go to [MongoDB Atlas](https://cloud.mongodb.com)
