@@ -1,9 +1,256 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        
-    </head>
-    <body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Finance Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <p>Loading your dashboard...</p>
+    </div>
 
-    </body>
+    <!-- Login/Register Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <h2 id="auth-title">Sign In</h2>
+                    <p id="auth-subtitle">Welcome back to your finance dashboard</p>
+                </div>
+                
+                <!-- Login Form -->
+                <form id="login-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" class="auth-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="register-name">Full Name</label>
+                        <input type="text" id="register-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <input type="password" id="register-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-currency">Currency</label>
+                        <select id="register-currency">
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="GBP">GBP (£)</option>
+                            <option value="JPY">JPY (¥)</option>
+                            <option value="CAD">CAD (C$)</option>
+                            <option value="AUD">AUD (A$)</option>
+                            <option value="CHF">CHF (CHF)</option>
+                            <option value="CNY">CNY (¥)</option>
+                            <option value="INR">INR (₹)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                </form>
+
+                <div class="auth-switch">
+                    <p id="auth-switch-text">Don't have an account? 
+                        <a href="#" id="auth-switch-link">Sign up</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" class="app" style="display: none;">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h3><i class="fas fa-chart-line"></i> Finance Dashboard</h3>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-page="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item" data-page="transactions">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Transactions</span>
+                </li>
+                <li class="menu-item" data-page="budgets">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Budgets</span>
+                </li>
+                <li class="menu-item" data-page="bills">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Bills</span>
+                </li>
+                <li class="menu-item" data-page="goals">
+                    <i class="fas fa-bullseye"></i>
+                    <span>Goals</span>
+                </li>
+                <li class="menu-item" data-page="reports">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Reports</span>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <span id="user-name">Loading...</span>
+                    <button id="logout-btn" class="btn-icon">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <h1 id="page-title">Dashboard</h1>
+                    <p id="page-subtitle">Overview of your financial health</p>
+                </div>
+                <div class="header-right">
+                    <div class="header-actions">
+                        <button id="add-transaction-btn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Transaction
+                        </button>
+                        <button id="theme-toggle" class="btn-icon">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page active">
+                    <div class="dashboard-grid">
+                        <!-- Summary Cards -->
+                        <div class="summary-cards">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Total Balance</h3>
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                                <div class="card-value" id="total-balance">$0.00</div>
+                                <div class="card-change positive" id="balance-change">+$0.00</div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Monthly Income</h3>
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <div class="card-value" id="monthly-income">$0.00</div>
+                                <div class="card-change positive" id="income-change">+0%</div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Monthly Expenses</h3>
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <div class="card-value" id="monthly-expenses">$0.00</div>
+                                <div class="card-change negative" id="expenses-change">+0%</div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Upcoming Bills</h3>
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="card-value" id="upcoming-bills">0</div>
+                                <div class="card-change" id="bills-amount">$0.00</div>
+                            </div>
+                        </div>
+
+                        <!-- Charts Section -->
+                        <div class="charts-section">
+                            <div class="chart-container">
+                                <h3>Spending by Category</h3>
+                                <canvas id="category-chart"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <h3>Income vs Expenses</h3>
+                                <canvas id="income-expense-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Recent Transactions -->
+                        <div class="recent-section">
+                            <div class="section-header">
+                                <h3>Recent Transactions</h3>
+                                <a href="#" class="view-all" data-page="transactions">View All</a>
+                            </div>
+                            <div id="recent-transactions" class="transaction-list">
+                                <!-- Transactions will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="quick-actions">
+                            <h3>Quick Actions</h3>
+                            <div class="action-buttons">
+                                <button class="action-btn" id="quick-add-income">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span>Add Income</span>
+                                </button>
+                                <button class="action-btn" id="quick-add-expense">
+                                    <i class="fas fa-minus-circle"></i>
+                                    <span>Add Expense</span>
+                                </button>
+                                <button class="action-btn" id="quick-add-bill">
+                                    <i class="fas fa-file-invoice"></i>
+                                    <span>Add Bill</span>
+                                </button>
+                                <button class="action-btn" id="quick-add-goal">
+                                    <i class="fas fa-target"></i>
+                                    <span>Add Goal</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other pages will be loaded dynamically -->
+                <div id="transactions-page" class="page"></div>
+                <div id="budgets-page" class="page"></div>
+                <div id="bills-page" class="page"></div>
+                <div id="goals-page" class="page"></div>
+                <div id="reports-page" class="page"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notifications" class="notifications"></div>
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/transactions.js"></script>
+    <script src="js/budgets.js"></script>
+    <script src="js/bills.js"></script>
+    <script src="js/goals.js"></script>
+    <script src="js/charts.js"></script>
+</body>
 </html>

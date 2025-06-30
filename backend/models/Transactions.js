@@ -41,7 +41,7 @@ const transactionSchema = new mongoose.Schema({
                 //Expense
                 'food', 'transportation', 'housing', 'utilities', 'healthcare', 'entertainment',
                 'shopping', 'education', 'insurance', 'debt', 'savings', 'investment-expense',
-                'travel', 'person-care', 'subscriptions', 'taxes', 'other-expenses'
+                'travel', 'personal-care', 'subscriptions', 'taxes', 'other-expense'
             ],
             message: 'Invalid category'
         }
@@ -116,7 +116,8 @@ const transactionSchema = new mongoose.Schema({
         ref: 'Budget'
     },
     isDeleted: {
-        type: String,
+        type: Boolean,
+        default: false,
         index: true
     }
 }, {
@@ -164,7 +165,7 @@ transactionSchema.statics.getCategorySummary = function(userId, startDate, endDa
                 },
                 total: { $sum: '$amount'},
                 count: { $sum: 1},
-                avgAmount: {$avg: 'amount'}
+                avgAmount: {$avg: '$amount'}
             }
         },
         {

@@ -1,0 +1,39 @@
+{
+  "name": "personal-finance-dashboard",
+  "version": "1.0.0",
+  "description": "A comprehensive personal finance management dashboard with expense tracking, budgeting, bill reminders, and financial goal setting",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "cd backend && node server.js",
+    "dev": "cd backend && nodemon server.js",
+    "dev:frontend": "cd frontend && npx http-server -p 3000 -c-1",
+    "dev:both": "concurrently \"npm run dev\" \"npm run dev:frontend\"",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install -g http-server",
+    "setup": "npm run install:backend && npm install -g concurrently nodemon http-server",
+    "build": "echo 'Build process for production deployment'",
+    "test": "echo 'Tests will be implemented'",
+    "lint": "echo 'Linting will be implemented'",
+    "seed": "cd backend && node scripts/seed.js"
+  },
+  "keywords": [
+    "finance",
+    "dashboard",
+    "expense-tracking",
+    "budgeting",
+    "bills",
+    "goals",
+    "personal-finance",
+    "money-management"
+  ],
+  "author": "Aslesh Sura",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/personal-finance-dashboard.git"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
+}

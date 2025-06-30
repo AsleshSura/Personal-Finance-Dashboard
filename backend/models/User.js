@@ -98,7 +98,7 @@ userSchema.pre('save', async function(next) {
 
 userSchema.methods.comparePassword = async function (candidatePassword) {
     try {
-        return await bcrypt.compare(candidatePassword, this.password());
+        return await bcrypt.compare(candidatePassword, this.password);
     } catch (error) {
         throw new Error('Password comparison failed');
     }
@@ -135,4 +135,4 @@ userSchema.set('toJSON', {
     }
 });
 
-module.exports - mongoose.model('User', userSchema);
+module.exports = mongoose.model('User', userSchema);

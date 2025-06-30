@@ -7,11 +7,25 @@ require('dotenv').config();
 
 const app = express();
 
-app.use(cors());
+// CORS configuration
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true
+}));
 app.use(express.json({limit: '10mb'}));
 app.use(express.urlencoded({extended: true, limit: '10mb'}));
 
 app.use('/uploads', express.static('uploads'));
+
+// Health check route
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'OK',
+        message: 'Personal Finance Dashboard API is running',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
 
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/finance_dashboard', {
     useNewUrlParse: true,
@@ -21,7 +35,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/finance_d
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/budgets', require('./routes/budgets'));
-app.use('/api/bills', require('.routes/bills'));
+app.use('/api/bills', require('./routes/bills'));
 app.use('/api/goals', require('./routes/goals'));
 
 if (process.env.NODE_ENV === 'production') {
