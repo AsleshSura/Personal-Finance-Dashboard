@@ -111,37 +111,41 @@
                 <div id="bills-page" class="page"></div>
                 <div id="goals-page" class="page"></div>
                 <div id="reports-page" class="page">
-                    <div class="section-header"><h3>Reports & Data Export</h3></div>
-                    <div class="reports-downloads">
-                        <form id="download-range-form" class="download-range-form">
-                            <label for="download-start-date">From:</label>
-                            <input type="date" id="download-start-date" name="start" required>
-                            <label for="download-end-date">To:</label>
-                            <input type="date" id="download-end-date" name="end" required>
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-download"></i> Download Filtered Transactions (CSV)</button>
-                        </form>
-                        <button class="btn btn-secondary" id="download-all-btn"><i class="fas fa-download"></i> Download All Transactions (CSV)</button>
-                        <form id="upload-form" class="upload-form" enctype="multipart/form-data">
-                            <label for="upload-file" class="btn btn-success"><i class="fas fa-upload"></i> Import CSV or Text</label>
-                            <input type="file" id="upload-file" name="file" accept=".csv,.txt" style="display:none;">
-                            <span id="upload-filename"></span>
-                        </form>
-                        <table class="import-export-table">
-                            <tr>
-                                <td><button class="btn btn-primary" id="download-budgets-btn"><i class="fas fa-download"></i> Download Budgets (CSV)</button></td>
-                                <td><label for="upload-budgets" class="btn btn-success">Import Budgets</label><input type="file" id="upload-budgets" accept=".csv,.txt" style="display:none;"></td>
-                            </tr>
-                            <tr>
-                                <td><button class="btn btn-primary" id="download-bills-btn"><i class="fas fa-download"></i> Download Bills (CSV)</button></td>
-                                <td><label for="upload-bills" class="btn btn-success">Import Bills</label><input type="file" id="upload-bills" accept=".csv,.txt" style="display:none;"></td>
-                            </tr>
-                            <tr>
-                                <td><button class="btn btn-primary" id="download-goals-btn"><i class="fas fa-download"></i> Download Goals (CSV)</button></td>
-                                <td><label for="upload-goals" class="btn btn-success">Import Goals</label><input type="file" id="upload-goals" accept=".csv,.txt" style="display:none;"></td>
-                            </tr>
-                        </table>
+                    <div class="reports-center-outer">
+                        <div class="section-header" style="justify-content: center;"><h3>Reports & Data Export</h3></div>
+                        <div class="reports-center-wrapper">
+                            <div class="reports-downloads">
+                                <form id="download-range-form" class="download-range-form">
+                                    <label for="download-start-date">From:</label>
+                                    <input type="date" id="download-start-date" name="start" required>
+                                    <label for="download-end-date">To:</label>
+                                    <input type="date" id="download-end-date" name="end" required>
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-download"></i> Download Filtered Transactions (CSV)</button>
+                                </form>
+                                <button class="btn btn-secondary" id="download-all-btn"><i class="fas fa-download"></i> Download All Transactions (CSV)</button>
+                                <form id="upload-form" class="upload-form" enctype="multipart/form-data">
+                                    <label for="upload-file" class="btn btn-success"><i class="fas fa-upload"></i> Import CSV or Text</label>
+                                    <input type="file" id="upload-file" name="file" accept=".csv,.txt" style="display:none;">
+                                    <span id="upload-filename"></span>
+                                </form>
+                                <table class="import-export-table">
+                                    <tr>
+                                        <td><button class="btn btn-primary" id="download-budgets-btn"><i class="fas fa-download"></i> Download Budgets (CSV)</button></td>
+                                        <td><label for="upload-budgets" class="btn btn-success">Import Budgets</label><input type="file" id="upload-budgets" accept=".csv,.txt" style="display:none;"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><button class="btn btn-primary" id="download-bills-btn"><i class="fas fa-download"></i> Download Bills (CSV)</button></td>
+                                        <td><label for="upload-bills" class="btn btn-success">Import Bills</label><input type="file" id="upload-bills" accept=".csv,.txt" style="display:none;"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><button class="btn btn-primary" id="download-goals-btn"><i class="fas fa-download"></i> Download Goals (CSV)</button></td>
+                                        <td><label for="upload-goals" class="btn btn-success">Import Goals</label><input type="file" id="upload-goals" accept=".csv,.txt" style="display:none;"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div id="reports-info" class="mt-3"></div>
+                        </div>
                     </div>
-                    <div id="reports-info" class="mt-3"></div>
                 </div>
                 <div id="calendar-page" class="page"></div>
                 <div id="trends-page" class="page">

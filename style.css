@@ -1810,3 +1810,24 @@ body {
     max-height: 80px;
     display: block;
 }
+
+/* Centering Reports Section */
+.reports-center-outer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 80vh;
+}
+.reports-center-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+.reports-center-wrapper .reports-downloads {
+    width: 100%;
+    max-width: 650px;
+}
