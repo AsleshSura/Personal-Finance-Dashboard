@@ -160,6 +160,21 @@ body {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+.form-group small {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.form-group input:invalid {
+    border-color: #ef4444;
+}
+
+.form-group input:valid {
+    border-color: #10b981;
+}
+
 .auth-switch {
     margin-top: 1.5rem;
     text-align: center;
@@ -766,7 +781,89 @@ body {
     background: var(--danger-color);
 }
 
-/* Responsive Design */
+/* Demo Banner Styles */
+.demo-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 0;
+    text-align: center;
+    z-index: 1050;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    animation: slideDown 0.3s ease-out;
+}
+
+.demo-banner-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.demo-banner-content i {
+    font-size: 18px;
+    animation: pulse 2s infinite;
+}
+
+.demo-banner-content span {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.demo-banner-content small {
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Adjust app layout when demo banner is shown */
+.app.demo-mode {
+    padding-top: 60px;
+}
+
+.app.demo-mode .sidebar {
+    top: 60px;
+    height: calc(100vh - 60px);
+}
+
+.app.demo-mode .main-content {
+    margin-top: 60px;
+}
+
+/* Responsive demo banner */
+@media (max-width: 768px) {
+    .demo-banner-content {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .demo-banner-content span {
+        font-size: 14px;
+    }
+    
+    .demo-banner-content small {
+        font-size: 12px;
+    }
+}
+
 @media (max-width: 1024px) {
     .dashboard-grid {
         grid-template-columns: 1fr;

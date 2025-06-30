@@ -2,8 +2,23 @@
 const CONFIG = {
     API_BASE_URL: 'http://localhost:5000/api',
     TOKEN_KEY: 'finance_dashboard_token',
-    USER_KEY: 'finance_dashboard_user'
+    USER_KEY: 'finance_dashboard_user',
+    DEMO_MODE: false // Will be set based on server response
 };
+
+// Check if we're in demo mode
+async function checkDemoMode() {
+    try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/health`);
+        const data = await response.json();
+        CONFIG.DEMO_MODE = data.mode === 'demo';
+        console.log(CONFIG.DEMO_MODE ? '🎭 Running in Demo Mode' : '🔐 Running with full authentication');
+        return CONFIG.DEMO_MODE;
+    } catch (error) {
+        console.error('❌ Could not connect to server');
+        return false;
+    }
+}
 
 // App State Management
 class AppState {
@@ -44,7 +59,18 @@ class AppState {
     }
 
     isAuthenticated() {
-        return !!(this.token && this.user);
+        return CONFIG.DEMO_MODE || !!(this.token && this.user);
+    }
+
+    async setDemoUser() {
+        if (CONFIG.DEMO_MODE) {
+            this.user = {
+                id: 'demo-user',
+                name: 'Demo User',
+                email: 'demo@example.com'
+            };
+            this.token = 'demo-token';
+        }
     }
 }
 
@@ -55,6 +81,21 @@ class ApiService {
     }
 
     async request(endpoint, options = {}) {
+        // Use demo endpoints if in demo mode
+        if (CONFIG.DEMO_MODE) {
+            const demoEndpoints = {
+                '/user/profile': '/demo/user',
+                '/transactions': '/demo/transactions',
+                '/budgets': '/demo/budgets',
+                '/bills': '/demo/bills',
+                '/goals': '/demo/goals'
+            };
+            
+            if (demoEndpoints[endpoint]) {
+                endpoint = demoEndpoints[endpoint];
+            }
+        }
+        
         const url = `${this.baseURL}${endpoint}`;
         const config = {
             headers: {
@@ -64,8 +105,8 @@ class ApiService {
             ...options
         };
 
-        // Add auth token if available
-        if (app.state.token) {
+        // Add auth token if available and not in demo mode
+        if (app.state.token && !CONFIG.DEMO_MODE) {
             config.headers.Authorization = `Bearer ${app.state.token}`;
         }
 
@@ -73,8 +114,16 @@ class ApiService {
             const response = await fetch(url, config);
             
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: 'Network error' }));
-                throw new Error(errorData.error || errorData.message || 'Request failed');
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch {
+                    errorData = { error: 'Network error', message: 'Unable to connect to server' };
+                }
+                
+                // Use the most specific error message available
+                const errorMessage = errorData.message || errorData.error || `Request failed with status ${response.status}`;
+                throw new Error(errorMessage);
             }
 
             return await response.json();
@@ -236,16 +285,21 @@ class FinanceApp {
         // Set initial theme
         document.documentElement.setAttribute('data-theme', this.state.theme);
         
-        // Check authentication
-        if (this.state.isAuthenticated()) {
-            try {
-                // Verify token is still valid
-                await this.api.get('/auth/me');
+        // Check authentication or demo mode
+        if (CONFIG.DEMO_MODE || this.state.isAuthenticated()) {
+            if (CONFIG.DEMO_MODE) {
+                console.log('🎭 Loading demo dashboard...');
                 this.showApp();
-            } catch (error) {
-                console.error('Token validation failed:', error);
-                this.state.clearAuth();
-                this.showAuth();
+            } else {
+                try {
+                    // Verify token is still valid
+                    await this.api.get('/auth/me');
+                    this.showApp();
+                } catch (error) {
+                    console.error('Token validation failed:', error);
+                    this.state.clearAuth();
+                    this.showAuth();
+                }
             }
         } else {
             this.showAuth();
@@ -304,6 +358,12 @@ class FinanceApp {
     showApp() {
         document.getElementById('auth-modal').style.display = 'none';
         document.getElementById('app').style.display = 'flex';
+        
+        // Show demo banner if in demo mode
+        if (CONFIG.DEMO_MODE) {
+            document.getElementById('demo-banner').style.display = 'block';
+            document.getElementById('app').classList.add('demo-mode');
+        }
         
         // Update user info
         document.getElementById('user-name').textContent = this.state.user?.name || 'User';
@@ -447,8 +507,18 @@ class FinanceApp {
 }
 
 // Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check demo mode first
+    await checkDemoMode();
+    
+    // Initialize the app
     window.app = new FinanceApp();
+    
+    // Set demo user if in demo mode
+    if (CONFIG.DEMO_MODE) {
+        await app.state.setDemoUser();
+        console.log('🎭 Demo mode activated - you can explore all features!');
+    }
 });
 
 // Export for use in other modules

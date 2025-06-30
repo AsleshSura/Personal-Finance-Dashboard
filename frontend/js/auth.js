@@ -12,33 +12,49 @@ class AuthManager {
 
     setupEventListeners() {
         // Form submissions
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleLogin();
-        });
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const authSwitchLink = document.getElementById('auth-switch-link');
+        const authModal = document.getElementById('auth-modal');
 
-        document.getElementById('register-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleRegister();
-        });
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleLogin();
+            });
+        }
+
+        if (registerForm) {
+            registerForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleRegister();
+            });
+        }
 
         // Switch between login and register
-        document.getElementById('auth-switch-link').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.toggleAuthMode();
-        });
+        if (authSwitchLink) {
+            authSwitchLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Auth switch clicked'); // Debug log
+                this.toggleAuthMode();
+            });
+        }
 
         // Close modal on outside click
-        document.getElementById('auth-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'auth-modal') {
-                // Don't allow closing auth modal by clicking outside
-                // as user must be authenticated
-            }
-        });
+        if (authModal) {
+            authModal.addEventListener('click', (e) => {
+                if (e.target.id === 'auth-modal') {
+                    // Don't allow closing auth modal by clicking outside
+                    // as user must be authenticated
+                }
+            });
+        }
     }
 
     toggleAuthMode() {
+        console.log('Toggling auth mode from:', this.isLoginMode ? 'login' : 'register');
         this.isLoginMode = !this.isLoginMode;
+        console.log('Auth mode now:', this.isLoginMode ? 'login' : 'register');
         this.updateAuthForm();
     }
 
@@ -49,6 +65,12 @@ class AuthManager {
         const authSubtitle = document.getElementById('auth-subtitle');
         const authSwitchText = document.getElementById('auth-switch-text');
         const authSwitchLink = document.getElementById('auth-switch-link');
+
+        // Check if all elements exist
+        if (!loginForm || !registerForm || !authTitle || !authSubtitle || !authSwitchText || !authSwitchLink) {
+            console.error('Auth form elements not found');
+            return;
+        }
 
         if (this.isLoginMode) {
             loginForm.style.display = 'block';
@@ -113,8 +135,23 @@ class AuthManager {
 
         } catch (error) {
             console.error('Login error:', error);
-            this.showFormError('login-form', error.message);
-            app.notifications.error(error.message || 'Login failed');
+            
+            // Handle specific error cases
+            let errorMessage = 'Login failed';
+            if (error.message.includes('Invalid email or password') || 
+                error.message.includes('Authentication failed')) {
+                errorMessage = 'Incorrect email or password';
+            } else if (error.message.includes('Network') || 
+                       error.message.includes('fetch')) {
+                errorMessage = 'Unable to connect to server. Please check your connection.';
+            } else if (error.message.includes('Account deactivated')) {
+                errorMessage = 'Your account has been deactivated';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            this.showFormError('login-form', errorMessage);
+            app.notifications.error(errorMessage);
         } finally {
             // Re-enable submit button
             submitBtn.disabled = false;
@@ -139,15 +176,24 @@ class AuthManager {
             const name = document.getElementById('register-name').value.trim();
             const email = document.getElementById('register-email').value.trim();
             const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
             const currency = document.getElementById('register-currency').value;
 
             // Basic validation
-            if (!name || !email || !password) {
+            if (!name || !email || !password || !confirmPassword) {
                 throw new Error('Please fill in all fields');
+            }
+
+            if (name.length < 2) {
+                throw new Error('Name must be at least 2 characters long');
             }
 
             if (password.length < 6) {
                 throw new Error('Password must be at least 6 characters long');
+            }
+
+            if (password !== confirmPassword) {
+                throw new Error('Passwords do not match');
             }
 
             if (!this.isValidEmail(email)) {
@@ -167,7 +213,10 @@ class AuthManager {
                 app.state.setAuth(response.token, response.user);
                 
                 // Show success message
-                app.notifications.success('Account created successfully! Welcome to your finance dashboard.');
+                app.notifications.success(`Welcome ${response.user.name}! Your account has been created successfully.`);
+                
+                // Clear the form
+                document.getElementById('register-form').reset();
                 
                 // Switch to main app
                 app.showApp();
@@ -406,6 +455,48 @@ class ProfileManager {
 
 // Initialize auth manager when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.authManager = new AuthManager();
-    window.profileManager = new ProfileManager();
+    console.log('DOM loaded, initializing auth manager...');
+    try {
+        window.authManager = new AuthManager();
+        window.profileManager = new ProfileManager();
+        console.log('Auth managers initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize auth managers:', error);
+    }
+});
+
+// Fallback initialization for auth switching if main auth manager fails
+window.addEventListener('load', () => {
+    const authSwitchLink = document.getElementById('auth-switch-link');
+    if (authSwitchLink && !window.authManager) {
+        console.log('Setting up fallback auth switch handler...');
+        let isLoginMode = true;
+        
+        authSwitchLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLoginMode = !isLoginMode;
+            
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const authTitle = document.getElementById('auth-title');
+            const authSubtitle = document.getElementById('auth-subtitle');
+            const authSwitchText = document.getElementById('auth-switch-text');
+            
+            if (isLoginMode) {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                authTitle.textContent = 'Sign In';
+                authSubtitle.textContent = 'Welcome back to your finance dashboard';
+                authSwitchText.innerHTML = "Don't have an account? ";
+                authSwitchLink.textContent = 'Sign up';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                authTitle.textContent = 'Create Account';
+                authSubtitle.textContent = 'Start managing your finances today';
+                authSwitchText.innerHTML = 'Already have an account? ';
+                authSwitchLink.textContent = 'Sign in';
+            }
+        });
+    }
 });
