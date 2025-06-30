@@ -1,132 +1,110 @@
-// --- BEGIN MERGED CODE ---
-// 1. Utility functions and classes (from app.js)
-// Desktop App Configuration
-const CONFIG = {
-    API_BASE_URL: 'http://localhost:5001/api',
-    DESKTOP_MODE: true,
-    PRODUCTION_MODE: false
+// --- BEGIN STATIC WEBSITE CODE ---
+// 1. Utility functions and classes
+const utils = {
+    formatDate(date) {
+        const d = new Date(date);
+        return d.toLocaleDateString();
+    },
+    formatCurrency(amount) {
+        return '$' + parseFloat(amount).toFixed(2);
+    },
+    generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
 };
-
-class AppState {
-    constructor() {
-        this.state = {
-            transactions: [],
-            filters: {
-                dateRange: null,
-                category: null,
-                searchTerm: ''
-            },
-            sort: {
-                column: 'date',
-                order: 'desc'
-            }
-        };
-    }
-
-    // ...rest of AppState methods...
-}
-
-class ApiService {
-    constructor() {
-        this.baseUrl = CONFIG.API_BASE_URL;
-    }
-
-    async fetchTransactions() {
-        // ...method code...
-    }
-
-    // ...rest of ApiService methods...
-}
 
 class NotificationService {
     static showSuccess(message) {
-        // ...method code...
+        alert(message); // Replace with custom UI if desired
     }
-
     static showError(message) {
-        // ...method code...
+        alert('Error: ' + message);
     }
 }
-
-const utils = {
-    formatDate(date) {
-        // ...function code...
-    },
-
-    // ...rest of utility functions...
-};
 
 class FinanceApp {
     constructor() {
-        this.appState = new AppState();
-        this.apiService = new ApiService();
+        this.state = {
+            transactions: Storage.getTransactions(),
+            budgets: Storage.getBudgets(),
+            bills: Storage.getBills(),
+            goals: Storage.getGoals()
+        };
     }
 
-    async init() {
-        // ...method code...
+    addTransaction(tx) {
+        tx.id = utils.generateId();
+        this.state.transactions.push(tx);
+        Storage.saveTransactions(this.state.transactions);
+        NotificationService.showSuccess('Transaction added!');
     }
 
-    // ...rest of FinanceApp methods...
+    updateTransaction(id, data) {
+        const idx = this.state.transactions.findIndex(t => t.id === id);
+        if (idx !== -1) {
+            this.state.transactions[idx] = { ...this.state.transactions[idx], ...data };
+            Storage.saveTransactions(this.state.transactions);
+            NotificationService.showSuccess('Transaction updated!');
+        }
+    }
+
+    deleteTransaction(id) {
+        this.state.transactions = this.state.transactions.filter(t => t.id !== id);
+        Storage.saveTransactions(this.state.transactions);
+        NotificationService.showSuccess('Transaction deleted!');
+    }
+
+    getTransactions() {
+        return this.state.transactions;
+    }
+
+    // Similar methods for budgets, bills, goals can be added here
 }
 
-// 2. DashboardPage class (from dashboard.js)
 class DashboardPage {
     constructor() {
-        this.init();
-    }
-
-    init() {
         this.render();
-        this.bindEvents();
     }
-
     render() {
-        // ...method code...
+        // Example: render transaction count
+        const txCount = window.app.getTransactions().length;
+        const el = document.getElementById('dashboard-tx-count');
+        if (el) el.textContent = txCount;
     }
-
-    bindEvents() {
-        // ...method code...
-    }
-
-    updateDashboard() {
-        // ...method code...
-    }
-
-    // ...rest of DashboardPage methods...
 }
 
-// 3. TransactionManager class (from transactions.js)
 class TransactionManager {
     constructor() {
-        this.transactions = [];
+        this.transactions = window.app.getTransactions();
     }
-
-    async loadTransactions() {
-        // ...method code...
+    add(tx) {
+        window.app.addTransaction(tx);
+        this.transactions = window.app.getTransactions();
     }
-
-    addTransaction(transaction) {
-        // ...method code...
+    update(id, data) {
+        window.app.updateTransaction(id, data);
+        this.transactions = window.app.getTransactions();
     }
-
-    deleteTransaction(transactionId) {
-        // ...method code...
+    delete(id) {
+        window.app.deleteTransaction(id);
+        this.transactions = window.app.getTransactions();
     }
-
-    updateTransaction(transactionId, updatedData) {
-        // ...method code...
+    getAll() {
+        return this.transactions;
     }
-
-    // ...rest of TransactionManager methods...
 }
-
-// 4. Attach managers to window and initialize
 
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new FinanceApp();
     window.dashboardPage = new DashboardPage();
     window.transactionManager = new TransactionManager();
     window.utils = utils;
-    window.CONFIG = CONFIG;
+    window.CONFIG = {};
+    // Hide loading overlay if present
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) loadingScreen.style.display = 'none';
+    // Show main app container
+    const appContainer = document.getElementById('app');
+    if (appContainer) appContainer.style.display = 'flex';
 });
-// --- END MERGED CODE ---
+// --- END STATIC WEBSITE CODE ---

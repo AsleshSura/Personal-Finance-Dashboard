@@ -1,64 +1,51 @@
-# Personal Finance Dashboard - Desktop App
+# Personal Finance Dashboard - Static Offline Web App
 
-A simple, offline desktop application for personal finance management built with Electron and SQLite.
+A simple, offline personal finance dashboard that runs entirely in your web browser. No installation, server, or database required—just open `frontend/index.html` in any browser.
 
 ## 🚀 Features
 
 - ✅ **Transaction Management** - Add, edit, delete, and search transactions
 - ✅ **Category Filtering** - Organize transactions by categories
-- ✅ **Local Storage** - All data stored locally in SQLite database
+- ✅ **Local Storage** - All data stored in your browser (localStorage)
 - ✅ **Offline Operation** - No internet connection required
-- ✅ **Desktop Native** - Runs as a Windows desktop application
+- ✅ **No Installation** - Works as a static website
 
-## 🎯 How to Run
+## 🏁 How to Use
 
-### Option 1: Quick Start (Recommended)
-Double-click `start-desktop.bat`
+1. Open the `frontend/index.html` file in your web browser.
+2. All features work offline and data is saved in your browser.
+3. No setup, server, or installation required.
 
-### Option 2: Command Line
-```bash
-npm start
-```
-
-### First Time Setup
-```bash
-npm run setup          # Install backend dependencies
-```
-
-## 🏗️ Project Structure
+## 🗂️ Project Structure
 
 ```
 Personal-Finance-Dashboard/
-├── main.js                    # Electron main process
-├── start-desktop.bat          # Windows startup script
-├── package.json               # Desktop app dependencies
 ├── frontend/
-│   ├── index.html            # Main app interface
-│   ├── css/style.css         # App styling
+│   ├── index.html         # Main app interface
+│   ├── css/style.css      # App styling
 │   └── js/
-│       ├── app.js            # Main app logic
-│       ├── dashboard.js      # Dashboard functionality
-│       └── transactions.js   # Transaction management
-└── backend/
-    ├── simple-server.js      # Express + SQLite server
-    ├── database.sqlite       # Local SQLite database
-    └── package.json          # Backend dependencies
+│       ├── storage.js     # LocalStorage CRUD helpers
+│       ├── main.js        # Main app logic (localStorage-based)
+│       ├── app.js         # (legacy, to be cleaned)
+│       ├── dashboard.js   # (legacy, to be cleaned)
+│       ├── transactions.js# (legacy, to be cleaned)
+│       └── ...
+├── README.md              # This file
+└── ... (no backend/server files)
 ```
 
-## 💾 Database
+## 💾 Data Storage
 
-- **Type**: SQLite (local file)
-- **Location**: `backend/database.sqlite`
-- **No setup required** - database is created automatically
+- **Type**: Browser localStorage
+- **Location**: Your browser (no files created)
+- **No setup required** - data is saved automatically
 
-## 🛠️ Technical Details
+## ⚙️ Technical Details
 
 - **Frontend**: HTML, CSS, JavaScript (Vanilla)
-- **Backend**: Node.js + Express + SQLite
-- **Desktop**: Electron
-- **Database**: better-sqlite3
+- **No backend/server/database**
 - **No authentication** - simple offline app
 
-## 📝 License
+---
 
-MIT License - see LICENSE file for details.
+**Note:** This project is now a pure static website. All backend, server, and database files have been removed. For best results, use a modern browser (Chrome, Edge, Firefox, Safari, etc.).
