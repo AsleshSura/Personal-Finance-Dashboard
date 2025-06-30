@@ -1,0 +1,6 @@
+@echo off
+echo Testing backend server...
+cd backend
+echo Starting server...
+node simple-server.js
+pause

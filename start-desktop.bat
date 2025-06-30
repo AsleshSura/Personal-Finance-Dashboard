@@ -4,5 +4,5 @@ echo =============================================
 echo.
 echo Starting the desktop application...
 echo.
-npm run desktop
+npm start
 pause

@@ -370,6 +370,9 @@ class FinanceApp {
     }
 
     showTransactionModal() {
+        // Debug: Log when modal is being shown
+        console.log('showTransactionModal called');
+        
         // Use the transaction manager to show the modal
         if (window.transactionManager) {
             window.transactionManager.showModal();

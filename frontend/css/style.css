@@ -84,7 +84,7 @@ body {
 
 /* Modal Styles */
 .modal {
-    display: flex;
+    display: none; /* Hide modal by default */
     position: fixed;
     z-index: 1000;
     left: 0;
@@ -95,6 +95,10 @@ body {
     backdrop-filter: blur(4px);
     align-items: center;
     justify-content: center;
+}
+
+.modal.show {
+    display: flex; /* Show modal when .show is added */
 }
 
 .modal-content {

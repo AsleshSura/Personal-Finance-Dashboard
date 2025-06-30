@@ -4,12 +4,11 @@
   "description": "A comprehensive personal finance management dashboard with expense tracking, budgeting, bill reminders, and financial goal setting",
   "main": "main.js",
   "scripts": {
-    "start": "concurrently \"cd backend && node simple-server.js\" \"wait-on http://localhost:5001 && electron .\"",
-    "desktop": "start-desktop.bat",
-    "install:backend": "cd backend && npm install",
-    "setup": "npm run install:backend",
+    "start": "run.bat",
+    "backend": "cd backend && node simple-server.js",
     "electron": "electron .",
-    "build": "electron-builder"
+    "setup": "cd backend && npm install",
+    "desktop": "concurrently \"cd backend && node simple-server.js\" \"wait-on http://localhost:5001 && electron .\""
   },
   "keywords": [
     "finance",
