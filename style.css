@@ -28,7 +28,7 @@
 }
 
 /* Dark Theme */
-[data-theme="dark"] {
+html[data-theme="dark"] {
     --bg-primary: #0f172a;
     --bg-secondary: #1e293b;
     --bg-tertiary: #334155;
@@ -328,11 +328,11 @@ body {
 }
 
 /* Ensure sufficient contrast for dark mode buttons */
-[data-theme="dark"] .btn-primary {
+html[data-theme="dark"] .btn-primary {
     background: var(--primary-dark);
     color: #fff;
 }
-[data-theme="dark"] .btn-secondary {
+html[data-theme="dark"] .btn-secondary {
     background: var(--bg-tertiary);
     color: var(--text-primary);
 }
@@ -599,7 +599,7 @@ body {
 .chart-bright-font {
     color: #fff !important;
 }
-[data-theme="dark"] .chart-bright-font {
+html[data-theme="dark"] .chart-bright-font {
     color: #f1f5f9 !important;
 }
 
@@ -1190,10 +1190,10 @@ body {
 }
 
 /* --- Lighten Budget Card and Entries in Dark Mode --- */
-[data-theme="dark"] #budgets-list-card {
+html[data-theme="dark"] #budgets-list-card {
     background: var(--bg-secondary);
 }
-[data-theme="dark"] .budget-list-entry {
+html[data-theme="dark"] .budget-list-entry {
     background: var(--bg-tertiary);
 }
 
@@ -1708,4 +1708,44 @@ body {
 .reports-center-wrapper .reports-downloads {
     width: 100%;
     max-width: 650px;
+}
+
+/* Dark mode toggle button styles */
+#theme-toggle {
+    border: 2px solid var(--primary-color);
+    background: var(--bg-secondary);
+    color: var(--primary-color);
+    border-radius: 12px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: background 0.18s, color 0.18s, border 0.18s, box-shadow 0.18s;
+    outline: none;
+    box-shadow: 0 0 0 0 rgba(59,130,246,0);
+}
+#theme-toggle:focus, #theme-toggle:active {
+    border-color: var(--primary-dark);
+    box-shadow: 0 0 0 2px var(--primary-dark);
+}
+#theme-toggle:hover {
+    background: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-dark);
+}
+html[data-theme="dark"] #theme-toggle {
+    background: var(--bg-primary);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+html[data-theme="dark"] #theme-toggle:hover {
+    background: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-dark);
+}
+#theme-toggle i {
+    font-size: 1.3em;
+    pointer-events: none;
 }

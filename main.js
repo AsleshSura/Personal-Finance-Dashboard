@@ -1,27 +1,41 @@
 // --- BEGIN STATIC WEBSITE CODE ---
 // Utility functions and classes
+/**
+ * Utility functions for formatting dates, currency, and generating IDs.
+ */
 const utils = {
+    /** Format a date as a locale string. */
     formatDate(date) {
         const d = new Date(date);
         return d.toLocaleDateString();
     },
+    /** Format a number as currency. */
     formatCurrency(amount) {
         return '$' + parseFloat(amount).toFixed(2);
     },
+    /** Generate a unique ID. */
     generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
     }
 };
 
+/**
+ * Notification service for showing success/error messages.
+ */
 class NotificationService {
+    /** Show a success message. */
     static showSuccess(message) {
         alert(message); // Replace with custom UI if desired
     }
+    /** Show an error message. */
     static showError(message) {
         alert('Error: ' + message);
     }
 }
 
+/**
+ * Main app state and methods for transactions, budgets, bills, and goals.
+ */
 class FinanceApp {
     constructor() {
         this.state = {
@@ -31,14 +45,14 @@ class FinanceApp {
             goals: Storage.getGoals()
         };
     }
-
+    /** Add a new transaction. */
     addTransaction(tx) {
         tx.id = utils.generateId();
         this.state.transactions.push(tx);
         Storage.saveTransactions(this.state.transactions);
         NotificationService.showSuccess('Transaction added!');
     }
-
+    /** Update an existing transaction by ID. */
     updateTransaction(id, data) {
         const idx = this.state.transactions.findIndex(t => t.id === id);
         if (idx !== -1) {
@@ -47,13 +61,13 @@ class FinanceApp {
             NotificationService.showSuccess('Transaction updated!');
         }
     }
-
+    /** Delete a transaction by ID. */
     deleteTransaction(id) {
         this.state.transactions = this.state.transactions.filter(t => t.id !== id);
         Storage.saveTransactions(this.state.transactions);
         NotificationService.showSuccess('Transaction deleted!');
     }
-
+    /** Get all transactions. */
     getTransactions() {
         return this.state.transactions;
     }
@@ -169,12 +183,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 icon.classList.add('fa-sun');
             }
         }
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) setTheme(savedTheme);
-        else setTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        // Always set theme on load
+        let savedTheme = localStorage.getItem('theme');
+        if (!savedTheme) {
+            savedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        setTheme(savedTheme);
         themeToggle.addEventListener('click', () => {
             const currentTheme = root.getAttribute('data-theme');
-            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+            console.log('Theme toggled to:', newTheme);
         });
     }
 });
