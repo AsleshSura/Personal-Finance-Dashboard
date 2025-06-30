@@ -474,35 +474,35 @@ body {
     display: block;
 }
 
-/* --- Dashboard Grid Responsive Spread --- */
+/* --- Dashboard Grid Responsive Spread (merged and DRY) --- */
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 2.5rem;
   align-items: start;
+  max-width: 1400px;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2rem;
 }
 .summary-cards {
-  grid-column: 1 / span 2;
-  display: flex;
-  gap: 2rem;
+  grid-column: span 12;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
   margin-bottom: 2rem;
 }
 .charts-section {
-  display: flex;
+  grid-column: span 8;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 2rem;
-  grid-column: 1 / span 2;
-}
-.chart-container {
-  flex: 1 1 0;
-  min-width: 320px;
-  background: var(--bg-tertiary);
-  border-radius: 12px;
-  padding: 2rem 1.5rem;
-  box-shadow: var(--shadow);
 }
 .recent-section {
-  grid-column: 1 / span 2;
+  grid-column: span 8;
   margin-top: 2.5rem;
+}
+.quick-actions {
+  grid-column: span 4;
 }
 @media (max-width: 1100px) {
   .dashboard-grid {
@@ -510,40 +510,12 @@ body {
   }
   .charts-section {
     flex-direction: column;
+    grid-template-columns: 1fr;
   }
   .summary-cards {
     flex-direction: column;
+    grid-template-columns: 1fr;
   }
-}
-
-/* Dashboard Grid */
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 2rem;
-    max-width: 1400px;
-}
-
-.summary-cards {
-    grid-column: span 12;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-}
-
-.charts-section {
-    grid-column: span 8;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-}
-
-.recent-section {
-    grid-column: span 8;
-}
-
-.quick-actions {
-    grid-column: span 4;
 }
 
 /* Cards */
@@ -1754,4 +1726,87 @@ body {
 }
 #new-category-input:focus {
     border-color: var(--primary-color);
+}
+
+/* Import/Export Table Styles */
+.import-export-table {
+  width: 100%;
+  max-width: 600px;
+  margin: 1.2rem 0 0 0;
+  border-collapse: separate;
+  border-spacing: 1rem 0.7rem;
+}
+.import-export-table td {
+  padding: 0;
+  vertical-align: middle;
+  border: none;
+  background: none;
+}
+.import-export-table .btn {
+  width: 100%;
+  min-width: 180px;
+  margin: 0;
+  box-sizing: border-box;
+}
+.import-export-table label.btn {
+  display: inline-block;
+  width: 100%;
+  min-width: 180px;
+  margin: 0;
+  text-align: center;
+}
+@media (max-width: 700px) {
+  .import-export-table {
+    border-spacing: 0.5rem 0.5rem;
+  }
+  .import-export-table .btn, .import-export-table label.btn {
+    min-width: 120px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Chart Placeholder (Trends) */
+.chart-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    padding: 2.5rem 1.5rem 2rem 1.5rem;
+    background: var(--bg-tertiary);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    margin-top: 1.2rem;
+    color: var(--text-secondary);
+    text-align: center;
+    transition: background 0.2s;
+}
+.chart-placeholder .placeholder-illustration {
+    margin-bottom: 1.2rem;
+    opacity: 0.95;
+}
+.chart-placeholder .placeholder-content h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+.chart-placeholder .placeholder-content p {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+.chart-placeholder .placeholder-tip {
+    font-size: 0.98rem;
+    color: var(--info-color);
+    background: rgba(6,182,212,0.08);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    margin-top: 0.5rem;
+    display: inline-block;
+}
+.chart-placeholder svg {
+    max-width: 80px;
+    max-height: 80px;
+    display: block;
 }

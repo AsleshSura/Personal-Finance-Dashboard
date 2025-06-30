@@ -1,5 +1,5 @@
 // --- BEGIN STATIC WEBSITE CODE ---
-// 1. Utility functions and classes
+// Utility functions and classes
 const utils = {
     formatDate(date) {
         const d = new Date(date);
@@ -101,13 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.utils = utils;
     window.CONFIG = {};
     // Hide loading overlay if present
-    const loadingScreen = document.getElementById('loading-screen');
-    if (loadingScreen) loadingScreen.style.display = 'none';
+    document.getElementById('loading-screen')?.style.setProperty('display', 'none');
     // Show main app container
-    const appContainer = document.getElementById('app');
-    if (appContainer) appContainer.style.display = 'flex';
-
-    // --- BUTTON & NAVIGATION HANDLERS ---
+    document.getElementById('app')?.style.setProperty('display', 'flex');
     // Sidebar navigation
     document.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', () => {
@@ -115,30 +111,19 @@ document.addEventListener('DOMContentLoaded', () => {
             item.classList.add('active');
             const page = item.getAttribute('data-page');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const pageDiv = document.getElementById(page + '-page');
-            if (pageDiv) pageDiv.classList.add('active');
+            document.getElementById(page + '-page')?.classList.add('active');
+            // Render dynamic pages
+            if (page === 'calendar') renderCalendarPage();
+            if (page === 'reports') renderReportsPage();
+            if (page === 'budgets') renderBudgetsPage();
+            if (page === 'bills') renderBillsPage();
+            if (page === 'goals') renderGoalsPage();
+            if (page === 'trends') renderTrendsPage();
         });
     });
-
     // Add Transaction button
     document.getElementById('add-transaction-btn')?.addEventListener('click', () => {
         document.getElementById('transaction-modal').style.display = 'flex';
-    });
-    // Quick Add Income/Expense
-    document.getElementById('quick-add-income')?.addEventListener('click', () => {
-        document.getElementById('transaction-modal').style.display = 'flex';
-        document.getElementById('transaction-type').value = 'income';
-    });
-    document.getElementById('quick-add-expense')?.addEventListener('click', () => {
-        document.getElementById('transaction-modal').style.display = 'flex';
-        document.getElementById('transaction-type').value = 'expense';
-    });
-    // Quick Add Bill/Goal (future: show relevant modals)
-    document.getElementById('quick-add-bill')?.addEventListener('click', () => {
-        alert('Bill modal not implemented yet.');
-    });
-    document.getElementById('quick-add-goal')?.addEventListener('click', () => {
-        alert('Goal modal not implemented yet.');
     });
     // Modal close/cancel
     document.getElementById('cancel-transaction')?.addEventListener('click', () => {
@@ -158,6 +143,40 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById('transactions-page').classList.add('active');
     });
+    // Initial render
+    populateCategoryDropdown();
+    renderRecentTransactions();
+    updateDashboardSummary();
+    handleTransactionForm();
+    renderCategoryChart();
+    renderIncomeExpenseChart();
+    // Render calendar/reports if active
+    if (document.querySelector('.menu-item[data-page="calendar"]')?.classList.contains('active')) renderCalendarPage();
+    if (document.getElementById('reports-page')?.classList.contains('active')) renderReportsPage();
+    // Theme toggle (dark mode)
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        const root = document.documentElement;
+        function setTheme(theme) {
+            root.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            const icon = themeToggle.querySelector('i');
+            if (theme === 'dark') {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            } else {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            }
+        }
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) setTheme(savedTheme);
+        else setTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = root.getAttribute('data-theme');
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+    }
 });
 // --- END STATIC WEBSITE CODE ---
 
@@ -182,8 +201,14 @@ function renderRecentTransactions() {
         container.innerHTML = '<div class="empty-state"><p>No recent transactions.</p></div>';
         return;
     }
-    container.innerHTML = txs.map(tx => `
+    // Bulk delete controls
+    container.innerHTML = `
+        <div style="margin-bottom:10px;">
+            <button id="bulk-delete-btn" class="btn btn-danger btn-sm" style="display:none;"><i class="fas fa-trash"></i> Delete Selected</button>
+        </div>
+    ` + txs.map(tx => `
         <div class="transaction-item">
+            <input type="checkbox" class="tx-bulk-checkbox" data-id="${tx.id}" style="margin-right:8px;">
             <div class="transaction-icon ${tx.type}"><i class="fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}"></i></div>
             <div class="transaction-details">
                 <div class="transaction-description">${tx.description}</div>
@@ -197,6 +222,24 @@ function renderRecentTransactions() {
             </div>
         </div>
     `).join('');
+    // Bulk delete logic
+    setTimeout(() => {
+        const checkboxes = container.querySelectorAll('.tx-bulk-checkbox');
+        const bulkBtn = document.getElementById('bulk-delete-btn');
+        checkboxes.forEach(cb => cb.addEventListener('change', () => {
+            const anyChecked = Array.from(checkboxes).some(c => c.checked);
+            bulkBtn.style.display = anyChecked ? 'inline-block' : 'none';
+        }));
+        bulkBtn.addEventListener('click', () => {
+            const ids = Array.from(checkboxes).filter(c => c.checked).map(c => c.getAttribute('data-id'));
+            if (ids.length && confirm('Delete selected transactions?')) {
+                ids.forEach(id => window.transactionManager.delete(id));
+                updateDashboardSummary();
+                renderRecentTransactions();
+                renderTransactionsPage && renderTransactionsPage();
+            }
+        });
+    }, 0);
 }
 
 function updateDashboardSummary() {
@@ -484,6 +527,57 @@ document.addEventListener('DOMContentLoaded', () => {
     renderIncomeExpenseChart();
     // Optionally, re-render charts when transactions change
 });
+
+function showChartPlaceholders() {
+    // Spending Trends
+    const trendsChart = document.getElementById('trends-chart');
+    const trendsPlaceholder = document.getElementById('trends-chart-placeholder');
+    if (trendsChart && trendsPlaceholder) {
+        const txs = window.app.getTransactions();
+        if (!txs.length) {
+            trendsChart.style.display = 'none';
+            trendsPlaceholder.style.display = 'block';
+        } else {
+            trendsChart.style.display = 'block';
+            trendsPlaceholder.style.display = 'none';
+        }
+    }
+    // Cash Flow
+    const cashFlowChart = document.getElementById('cash-flow-chart');
+    const cashFlowPlaceholder = document.getElementById('cash-flow-chart-placeholder');
+    if (cashFlowChart && cashFlowPlaceholder) {
+        const txs = window.app.getTransactions();
+        if (!txs.some(tx => tx.type === 'income' || tx.type === 'expense')) {
+            cashFlowChart.style.display = 'none';
+            cashFlowPlaceholder.style.display = 'block';
+        } else {
+            cashFlowChart.style.display = 'block';
+            cashFlowPlaceholder.style.display = 'none';
+        }
+    }
+    // Net Worth
+    const netWorthChart = document.getElementById('net-worth-chart');
+    const netWorthPlaceholder = document.getElementById('net-worth-chart-placeholder');
+    if (netWorthChart && netWorthPlaceholder) {
+        const txs = window.app.getTransactions();
+        if (!txs.length) {
+            netWorthChart.style.display = 'none';
+            netWorthPlaceholder.style.display = 'block';
+        } else {
+            netWorthChart.style.display = 'block';
+            netWorthPlaceholder.style.display = 'none';
+        }
+    }
+}
+// Call after rendering charts and on page load
+renderTrendsPage = (function(orig) {
+    return function() {
+        if (typeof orig === 'function') orig();
+        showChartPlaceholders();
+    };
+})(typeof renderTrendsPage === 'function' ? renderTrendsPage : null);
+document.addEventListener('DOMContentLoaded', showChartPlaceholders);
+
 // --- END ENHANCEMENTS ---
 
 // --- BEGIN SUBTAB RENDERING ---
@@ -522,7 +616,10 @@ function renderBudgetsPage() {
     const page = document.getElementById('budgets-page');
     if (!page) return;
     const budgets = window.app.state.budgets || [];
-    const txs = window.app.getTransactions();
+    if (!budgets.length) {
+        page.innerHTML = '<div class="empty-state"><i class="fas fa-piggy-bank"></i><p>No budgets set yet.</p></div>';
+        return;
+    }
     page.innerHTML = `
         <h2 class="budgets-title">Budgets</h2>
         <form id="budget-form" class="budget-form">
@@ -675,8 +772,19 @@ if (budgetForm) {
 function renderBillsPage() {
     const page = document.getElementById('bills-page');
     if (!page) return;
-    // Card container
     let bills = Storage.getBills();
+    if (!bills.length) {
+        page.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <p>No bills yet. Add one to get started!</p>
+                <button class="btn btn-primary" id="add-bill-btn-empty">+ Add Bill</button>
+            </div>`;
+        document.getElementById('add-bill-btn-empty').onclick = () => {
+            showBillModal();
+        };
+        return;
+    }
     page.innerHTML = `
         <div class="bills-card">
             <div class="bills-header-row">
@@ -728,7 +836,7 @@ function renderBillsPage() {
         const amount = parseFloat(document.getElementById('bill-amount').value);
         const date = document.getElementById('bill-date').value;
         if (!name || isNaN(amount) || !date) return;
-        const bills = Storage.getBills();
+        let bills = Storage.getBills();
         bills.push({ id: utils.generateId(), name, amount, date, status: 'upcoming' });
         Storage.saveBills(bills);
         renderBillsList();
@@ -811,6 +919,18 @@ function renderGoalsPage() {
     const page = document.getElementById('goals-page');
     if (!page) return;
     const goals = Storage.getGoals();
+    if (!goals.length) {
+        page.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-bullseye"></i>
+                <p>No goals yet. Add one to get started!</p>
+                <button class="btn btn-primary" id="add-goal-btn-empty">+ Add Goal</button>
+            </div>`;
+        document.getElementById('add-goal-btn-empty').onclick = () => {
+            showGoalModal();
+        };
+        return;
+    }
     page.innerHTML = `
         <div class="bills-card goals-card">
             <div class="bills-header-row">
@@ -1048,10 +1168,119 @@ window.addToGoal = function(id) {
     Storage.saveGoals(updatedGoals);
     renderGoalsList();
 };
-// --- END BUDGET FUNCTIONALITY ---
+
+function showGoalModal() {
+    let modal = document.getElementById('goal-modal');
+    if (!modal) {
+        // Create modal if not present
+        modal = document.createElement('div');
+        modal.id = 'goal-modal';
+        modal.className = 'modal show';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header"><h2 id="goal-modal-title">Add Goal</h2></div>
+                <form id="goal-form" class="modal-body">
+                    <div class="form-group">
+                        <label for="goal-name">Name</label>
+                        <input type="text" id="goal-name" name="name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-amount">Target Amount</label>
+                        <input type="number" id="goal-amount" name="amount" step="0.01" min="0.01" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-date">Target Date</label>
+                        <input type="date" id="goal-date" name="date" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-desc">Description (optional)</label>
+                        <textarea id="goal-desc" name="desc" rows="2"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancel-goal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Goal</button>
+                    </div>
+                </form>
+            </div>`;
+        document.body.appendChild(modal);
+    } else {
+        modal.classList.add('show');
+    }
+    document.getElementById('goal-form').onsubmit = function(e) {
+        e.preventDefault();
+        const name = document.getElementById('goal-name').value.trim();
+        const amount = parseFloat(document.getElementById('goal-amount').value);
+        const date = document.getElementById('goal-date').value;
+        const desc = document.getElementById('goal-desc').value.trim();
+        if (!name || isNaN(amount) || !date) return;
+        let goals = Storage.getGoals();
+        goals.push({ id: utils.generateId(), name, amount, date, desc, saved: 0, status: 'active' });
+        Storage.saveGoals(goals);
+        modal.classList.remove('show');
+        renderGoalsPage();
+    };
+    document.getElementById('cancel-goal').onclick = () => {
+        modal.classList.remove('show');
+    };
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.remove('show');
+    };
+}
+
+// --- Transaction Templates ---
+const TEMPLATE_KEY = 'transactionTemplates';
+function getTemplates() {
+    return JSON.parse(localStorage.getItem(TEMPLATE_KEY) || '[]');
+}
+function saveTemplates(templates) {
+    localStorage.setItem(TEMPLATE_KEY, JSON.stringify(templates));
+}
+function populateTemplateDropdown() {
+    const select = document.getElementById('transaction-template-select');
+    if (!select) return;
+    const templates = getTemplates();
+    select.innerHTML = '<option value="">Select a template...</option>' +
+        templates.map((tpl, i) => `<option value="${i}">${tpl.description || 'Template ' + (i+1)}</option>`).join('');
+}
+document.addEventListener('DOMContentLoaded', () => {
+    populateTemplateDropdown();
+    // Template select fill form
+    document.getElementById('transaction-template-select')?.addEventListener('change', function() {
+        const idx = this.value;
+        if (!idx) return;
+        const tpl = getTemplates()[idx];
+        if (!tpl) return;
+        document.getElementById('transaction-type').value = tpl.type;
+        document.getElementById('transaction-amount').value = tpl.amount;
+        document.getElementById('transaction-description').value = tpl.description;
+        document.getElementById('transaction-category').value = tpl.category;
+        document.getElementById('transaction-date').value = tpl.date;
+        document.getElementById('transaction-tags').value = tpl.tags || '';
+        document.getElementById('transaction-notes').value = tpl.notes || '';
+    });
+    // Save as template
+    document.getElementById('save-template-btn')?.addEventListener('click', function() {
+        const type = document.getElementById('transaction-type').value;
+        const amount = document.getElementById('transaction-amount').value;
+        const description = document.getElementById('transaction-description').value;
+        const category = document.getElementById('transaction-category').value;
+        const date = document.getElementById('transaction-date').value;
+        const tags = document.getElementById('transaction-tags').value;
+        const notes = document.getElementById('transaction-notes').value;
+        if (!type || !amount || !description || !category || !date) {
+            NotificationService.showError('Fill out the form before saving as template.');
+            return;
+        }
+        const templates = getTemplates();
+        templates.push({ type, amount, description, category, date, tags, notes });
+        saveTemplates(templates);
+        populateTemplateDropdown();
+        NotificationService.showSuccess('Template saved!');
+    });
+});
+// --- END SUBTAB RENDERING ---
 
 // --- BEGIN CALENDAR PAGE FUNCTIONALITY ---
-
 function renderCalendarPage() {
     const page = document.getElementById('calendar-page');
     if (!page) return;
@@ -1268,3 +1497,104 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 // --- END DARK MODE TOGGLE FUNCTIONALITY ---
+
+// --- BEGIN BILL REMINDERS ---
+function showBillReminders() {
+    const now = new Date();
+    const soon = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+    const upcoming = (window.app.state.bills || []).filter(bill => {
+        if (!bill.date) return false;
+        const billDate = new Date(bill.date);
+        return billDate >= now && billDate <= soon;
+    });
+    if (upcoming.length) {
+        const notifications = document.getElementById('notifications');
+        if (notifications) {
+            notifications.innerHTML = `<div class="notification info"><i class="fas fa-bell"></i> ${upcoming.length} bill(s) due within 7 days!</div>`;
+            setTimeout(() => { notifications.innerHTML = ''; }, 8000);
+        }
+    }
+}
+document.addEventListener('DOMContentLoaded', showBillReminders);
+// Also show reminders after adding/deleting bills
+function afterBillChange() {
+    updateDashboardSummary();
+    showBillReminders();
+}
+// Patch bill add/delete logic if present
+if (window.app && window.app.state && window.app.state.bills) {
+    // If you have addBill/deleteBill methods, call afterBillChange() after them
+}
+// --- END BILL REMINDERS ---
+
+// --- BEGIN DASHBOARD WIDGET VISIBILITY ---
+const DASHBOARD_WIDGETS_KEY = 'dashboardWidgetsVisible';
+function getDashboardWidgetsVisible() {
+    return JSON.parse(localStorage.getItem(DASHBOARD_WIDGETS_KEY) || '{}');
+}
+function saveDashboardWidgetsVisible(obj) {
+    localStorage.setItem(DASHBOARD_WIDGETS_KEY, JSON.stringify(obj));
+}
+function setupDashboardWidgetSettings() {
+    const grid = document.querySelector('.summary-cards');
+    if (!grid) return;
+    // Add settings button
+    let btn = document.getElementById('dashboard-widget-settings-btn');
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'dashboard-widget-settings-btn';
+        btn.className = 'btn btn-secondary btn-sm';
+        btn.innerHTML = '<i class="fas fa-cog"></i> Widgets';
+        btn.style.marginBottom = '10px';
+        grid.parentNode.insertBefore(btn, grid);
+    }
+    btn.onclick = () => {
+        const visible = getDashboardWidgetsVisible();
+        const modal = document.createElement('div');
+        modal.className = 'modal show';
+        modal.innerHTML = `<div class="modal-content"><div class="modal-header"><h2>Dashboard Widgets</h2></div><div class="modal-body">
+            <label><input type="checkbox" data-widget="balance" ${visible.balance !== false ? 'checked' : ''}/> Total Balance</label><br>
+            <label><input type="checkbox" data-widget="income" ${visible.income !== false ? 'checked' : ''}/> Monthly Income</label><br>
+            <label><input type="checkbox" data-widget="expenses" ${visible.expenses !== false ? 'checked' : ''}/> Monthly Expenses</label><br>
+            <label><input type="checkbox" data-widget="bills" ${visible.bills !== false ? 'checked' : ''}/> Upcoming Bills</label><br>
+        </div><div class="modal-footer"><button class="btn btn-secondary" id="close-widget-modal">Close</button></div></div>`;
+        document.body.appendChild(modal);
+        modal.querySelectorAll('input[type=checkbox]').forEach(cb => {
+            cb.addEventListener('change', () => {
+                visible[cb.getAttribute('data-widget')] = cb.checked;
+                saveDashboardWidgetsVisible(visible);
+                renderDashboardWidgets();
+            });
+        });
+        document.getElementById('close-widget-modal').onclick = () => modal.remove();
+    };
+}
+function renderDashboardWidgets() {
+    const visible = getDashboardWidgetsVisible();
+    const cards = document.querySelectorAll('.summary-cards .card');
+    if (!cards.length) return;
+    // Order: balance, income, expenses, bills
+    ['balance', 'income', 'expenses', 'bills'].forEach((key, i) => {
+        if (cards[i]) cards[i].style.display = (visible[key] !== false) ? '' : 'none';
+    });
+}
+document.addEventListener('DOMContentLoaded', () => {
+    setupDashboardWidgetSettings();
+    renderDashboardWidgets();
+});
+
+// --- BEGIN KEYBOARD SHORTCUTS ---
+document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 't' || e.key === 'T') {
+        document.getElementById('add-transaction-btn')?.click();
+    }
+    if (e.key >= '1' && e.key <= '7') {
+        const pages = ['dashboard','transactions','budgets','bills','goals','reports','calendar','trends'];
+        const idx = parseInt(e.key, 10) - 1;
+        if (pages[idx]) {
+            document.querySelector(`.menu-item[data-page="${pages[idx]}"]`)?.click();
+        }
+    }
+});
+// --- END KEYBOARD SHORTCUTS ---

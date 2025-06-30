@@ -16,7 +16,6 @@
         <div class="loading-spinner"></div>
         <p>Loading your dashboard...</p>
     </div>
-
     <!-- Main Application -->
     <div id="app" class="app" style="display: none;">
         <!-- Sidebar -->
@@ -25,46 +24,19 @@
                 <h3><i class="fas fa-chart-line"></i> Finance Dashboard</h3>
             </div>
             <ul class="sidebar-menu">
-                <li class="menu-item active" data-page="dashboard">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
-                </li>
-                <li class="menu-item" data-page="transactions">
-                    <i class="fas fa-exchange-alt"></i>
-                    <span>Transactions</span>
-                </li>
-                <li class="menu-item" data-page="budgets">
-                    <i class="fas fa-chart-pie"></i>
-                    <span>Budgets</span>
-                </li>
-                <li class="menu-item" data-page="bills">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                    <span>Bills</span>
-                </li>
-                <li class="menu-item" data-page="goals">
-                    <i class="fas fa-bullseye"></i>
-                    <span>Goals</span>
-                </li>
-                <li class="menu-item" data-page="reports">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Reports</span>
-                </li>
-                    <li class="menu-item" data-page="calendar">
-                    <i class="fas fa-calendar"></i>
-                    <span>Calendar</span>
-                </li>
-                <li class="menu-item" data-page="trends">
-                    <i class="fas fa-chart-area"></i>
-                    <span>Trends</span>
-                </li>
+                <li class="menu-item active" data-page="dashboard"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></li>
+                <li class="menu-item" data-page="transactions"><i class="fas fa-exchange-alt"></i><span>Transactions</span></li>
+                <li class="menu-item" data-page="budgets"><i class="fas fa-chart-pie"></i><span>Budgets</span></li>
+                <li class="menu-item" data-page="bills"><i class="fas fa-file-invoice-dollar"></i><span>Bills</span></li>
+                <li class="menu-item" data-page="goals"><i class="fas fa-bullseye"></i><span>Goals</span></li>
+                <li class="menu-item" data-page="reports"><i class="fas fa-chart-bar"></i><span>Reports</span></li>
+                <li class="menu-item" data-page="calendar"><i class="fas fa-calendar"></i><span>Calendar</span></li>
+                <li class="menu-item" data-page="trends"><i class="fas fa-chart-area"></i><span>Trends</span></li>
             </ul>
             <div class="sidebar-footer">
-                <div class="user-info">
-                    <span id="user-name">Personal Finance Dashboard</span>
-                </div>
+                <div class="user-info"><span id="user-name">Personal Finance Dashboard</span></div>
             </div>
         </nav>
-
         <!-- Main Content -->
         <main class="main-content">
             <!-- Header -->
@@ -75,16 +47,11 @@
                 </div>
                 <div class="header-right">
                     <div class="header-actions">
-                        <button id="add-transaction-btn" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Add Transaction
-                        </button>
-                        <button id="theme-toggle" class="btn-icon">
-                            <i class="fas fa-moon"></i>
-                        </button>
+                        <button id="add-transaction-btn" class="btn btn-primary"><i class="fas fa-plus"></i> Add Transaction</button>
+                        <button id="theme-toggle" class="btn-icon"><i class="fas fa-moon"></i></button>
                     </div>
                 </div>
             </header>
-
             <!-- Page Content -->
             <div class="page-content">
                 <!-- Dashboard Page -->
@@ -93,76 +60,50 @@
                         <!-- Summary Cards -->
                         <div class="summary-cards">
                             <div class="card">
-                                <div class="card-header">
-                                    <h3>Total Balance</h3>
-                                    <i class="fas fa-wallet"></i>
-                                </div>
+                                <div class="card-header"><h3>Total Balance</h3><i class="fas fa-wallet"></i></div>
                                 <div class="card-value" id="total-balance">$0.00</div>
                                 <div class="card-change positive" id="balance-change">+$0.00</div>
                             </div>
                             <div class="card">
-                                <div class="card-header">
-                                    <h3>Monthly Income</h3>
-                                    <i class="fas fa-arrow-up"></i>
-                                </div>
+                                <div class="card-header"><h3>Monthly Income</h3><i class="fas fa-arrow-up"></i></div>
                                 <div class="card-value" id="monthly-income">$0.00</div>
                                 <div class="card-change positive" id="income-change">+0%</div>
                             </div>
                             <div class="card">
-                                <div class="card-header">
-                                    <h3>Monthly Expenses</h3>
-                                    <i class="fas fa-arrow-down"></i>
-                                </div>
+                                <div class="card-header"><h3>Monthly Expenses</h3><i class="fas fa-arrow-down"></i></div>
                                 <div class="card-value" id="monthly-expenses">$0.00</div>
                                 <div class="card-change negative" id="expenses-change">+0%</div>
                             </div>
                             <div class="card">
-                                <div class="card-header">
-                                    <h3>Upcoming Bills</h3>
-                                    <i class="fas fa-calendar-alt"></i>
-                                </div>
+                                <div class="card-header"><h3>Upcoming Bills</h3><i class="fas fa-calendar-alt"></i></div>
                                 <div class="card-value" id="upcoming-bills">0</div>
                                 <div class="card-change" id="bills-amount">$0.00</div>
                             </div>
                         </div>
-
                         <!-- Charts Section -->
                         <div class="charts-section">
-                            <div class="chart-container">
-                                <h3>Spending by Category</h3>
-                                <canvas id="category-chart"></canvas>
-                            </div>
-                            <div class="chart-container">
-                                <h3>Income vs Expenses</h3>
-                                <canvas id="income-expense-chart"></canvas>
-                            </div>
+                            <div class="chart-container"><h3>Spending by Category</h3><canvas id="category-chart"></canvas></div>
+                            <div class="chart-container"><h3>Income vs Expenses</h3><canvas id="income-expense-chart"></canvas></div>
                         </div>
-
                         <!-- Recent Transactions -->
                         <div class="recent-section">
-                            <div class="section-header">
-                                <h3>Recent Transactions</h3>
-                                <a href="#" class="view-all" data-page="transactions">View All</a>
-                            </div>
-                            <div id="recent-transactions" class="transaction-list">
-                                <!-- Transactions will be loaded here -->
-                            </div>
+                            <div class="section-header"><h3>Recent Transactions</h3><a href="#" class="view-all" data-page="transactions">View All</a></div>
+                            <div id="recent-transactions" class="transaction-list"></div>
                         </div>
                     </div>
                 </div>
-
                 <!-- Other pages will be loaded dynamically -->
                 <div id="transactions-page" class="page">
-                    <div class="transactions-filters" style="margin-bottom:1.5rem;display:flex;flex-wrap:wrap;gap:1rem;align-items:center;">
-                        <input type="text" id="tx-search" placeholder="Search description/category..." style="flex:1;min-width:180px;">
+                    <div class="transactions-filters">
+                        <input type="text" id="tx-search" placeholder="Search description/category...">
                         <select id="tx-filter-type">
                             <option value="">All Types</option>
                             <option value="income">Income</option>
                             <option value="expense">Expense</option>
                         </select>
                         <select id="tx-filter-category"><option value="">All Categories</option></select>
-                        <input type="number" id="tx-filter-min" placeholder="Min Amount" style="width:110px;">
-                        <input type="number" id="tx-filter-max" placeholder="Max Amount" style="width:110px;">
+                        <input type="number" id="tx-filter-min" placeholder="Min Amount">
+                        <input type="number" id="tx-filter-max" placeholder="Max Amount">
                         <button class="btn btn-secondary" id="tx-filter-clear">Clear</button>
                     </div>
                 </div>
@@ -170,9 +111,7 @@
                 <div id="bills-page" class="page"></div>
                 <div id="goals-page" class="page"></div>
                 <div id="reports-page" class="page">
-                    <div class="section-header">
-                        <h3>Reports & Data Export</h3>
-                    </div>
+                    <div class="section-header"><h3>Reports & Data Export</h3></div>
                     <div class="reports-downloads">
                         <form id="download-range-form" class="download-range-form">
                             <label for="download-start-date">From:</label>
@@ -182,28 +121,25 @@
                             <button type="submit" class="btn btn-primary"><i class="fas fa-download"></i> Download Filtered Transactions (CSV)</button>
                         </form>
                         <button class="btn btn-secondary" id="download-all-btn"><i class="fas fa-download"></i> Download All Transactions (CSV)</button>
-                        <form id="upload-form" class="upload-form" enctype="multipart/form-data" style="margin-top:1.5rem;">
-                            <label for="upload-file" class="btn btn-success" style="margin-right:0.7rem;"><i class="fas fa-upload"></i> Import CSV or Text</label>
+                        <form id="upload-form" class="upload-form" enctype="multipart/form-data">
+                            <label for="upload-file" class="btn btn-success"><i class="fas fa-upload"></i> Import CSV or Text</label>
                             <input type="file" id="upload-file" name="file" accept=".csv,.txt" style="display:none;">
-                            <span id="upload-filename" style="color:var(--text-secondary);"></span>
+                            <span id="upload-filename"></span>
                         </form>
-                        <div class="mt-3" style="display:flex;flex-direction:column;gap:0.7rem;">
-                            <div>
-                                <button class="btn btn-primary" id="download-budgets-btn"><i class="fas fa-download"></i> Download Budgets (CSV)</button>
-                                <input type="file" id="upload-budgets" accept=".csv,.txt" style="display:none;">
-                                <label for="upload-budgets" class="btn btn-success" style="margin-left:0.5rem;">Import Budgets</label>
-                            </div>
-                            <div>
-                                <button class="btn btn-primary" id="download-bills-btn"><i class="fas fa-download"></i> Download Bills (CSV)</button>
-                                <input type="file" id="upload-bills" accept=".csv,.txt" style="display:none;">
-                                <label for="upload-bills" class="btn btn-success" style="margin-left:0.5rem;">Import Bills</label>
-                            </div>
-                            <div>
-                                <button class="btn btn-primary" id="download-goals-btn"><i class="fas fa-download"></i> Download Goals (CSV)</button>
-                                <input type="file" id="upload-goals" accept=".csv,.txt" style="display:none;">
-                                <label for="upload-goals" class="btn btn-success" style="margin-left:0.5rem;">Import Goals</label>
-                            </div>
-                        </div>
+                        <table class="import-export-table">
+                            <tr>
+                                <td><button class="btn btn-primary" id="download-budgets-btn"><i class="fas fa-download"></i> Download Budgets (CSV)</button></td>
+                                <td><label for="upload-budgets" class="btn btn-success">Import Budgets</label><input type="file" id="upload-budgets" accept=".csv,.txt" style="display:none;"></td>
+                            </tr>
+                            <tr>
+                                <td><button class="btn btn-primary" id="download-bills-btn"><i class="fas fa-download"></i> Download Bills (CSV)</button></td>
+                                <td><label for="upload-bills" class="btn btn-success">Import Bills</label><input type="file" id="upload-bills" accept=".csv,.txt" style="display:none;"></td>
+                            </tr>
+                            <tr>
+                                <td><button class="btn btn-primary" id="download-goals-btn"><i class="fas fa-download"></i> Download Goals (CSV)</button></td>
+                                <td><label for="upload-goals" class="btn btn-success">Import Goals</label><input type="file" id="upload-goals" accept=".csv,.txt" style="display:none;"></td>
+                            </tr>
+                        </table>
                     </div>
                     <div id="reports-info" class="mt-3"></div>
                 </div>
@@ -213,27 +149,75 @@
                         <div class="chart-container">
                             <h3>Spending Trends</h3>
                             <canvas id="trends-chart"></canvas>
+                            <div class="chart-placeholder" id="trends-chart-placeholder" style="display:none;">
+                                <div class="placeholder-illustration">
+                                    <!-- SVG: Wallet with chart -->
+                                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="10" y="30" width="60" height="35" rx="8" fill="#e0e7ef"/>
+                                        <rect x="18" y="38" width="44" height="19" rx="4" fill="#3b82f6" fill-opacity="0.15"/>
+                                        <rect x="24" y="50" width="8" height="7" rx="2" fill="#3b82f6"/>
+                                        <rect x="36" y="45" width="8" height="12" rx="2" fill="#10b981"/>
+                                        <rect x="48" y="42" width="8" height="15" rx="2" fill="#f59e0b"/>
+                                        <circle cx="60" cy="38" r="3" fill="#3b82f6"/>
+                                    </svg>
+                                </div>
+                                <div class="placeholder-content">
+                                    <h4>No Spending Data Yet</h4>
+                                    <p>Add transactions to see your spending trends visualized here.</p>
+                                    <div class="placeholder-tip">Tip: Try adding a few expenses in different categories to see a sample chart!</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="chart-container">
                             <h3>Cash Flow Over Time</h3>
                             <canvas id="cash-flow-chart" height="180"></canvas>
+                            <div class="chart-placeholder" id="cash-flow-chart-placeholder" style="display:none;">
+                                <div class="placeholder-illustration">
+                                    <!-- SVG: Flowing cash -->
+                                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="15" y="35" width="50" height="25" rx="7" fill="#e0f7fa"/>
+                                        <rect x="22" y="42" width="36" height="11" rx="3" fill="#06b6d4" fill-opacity="0.18"/>
+                                        <path d="M25 55 Q40 35 55 55" stroke="#06b6d4" stroke-width="2" fill="none"/>
+                                        <circle cx="40" cy="48" r="4" fill="#06b6d4"/>
+                                    </svg>
+                                </div>
+                                <div class="placeholder-content">
+                                    <h4>No Cash Flow Data</h4>
+                                    <p>Track income and expenses to see your cash flow over time.</p>
+                                    <div class="placeholder-tip">Tip: Add both income and expense transactions for a more complete picture.</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="chart-container">
                             <h3>Net Worth Over Time</h3>
                             <canvas id="net-worth-chart" height="180"></canvas>
+                            <div class="chart-placeholder" id="net-worth-chart-placeholder" style="display:none;">
+                                <div class="placeholder-illustration">
+                                    <!-- SVG: Upward arrow and coins -->
+                                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <ellipse cx="40" cy="60" rx="24" ry="8" fill="#f1f5f9"/>
+                                        <rect x="32" y="40" width="16" height="20" rx="4" fill="#10b981" fill-opacity="0.18"/>
+                                        <rect x="36" y="48" width="8" height="12" rx="2" fill="#10b981"/>
+                                        <path d="M40 55 L40 35 M40 35 L36 39 M40 35 L44 39" stroke="#10b981" stroke-width="2" fill="none"/>
+                                        <circle cx="40" cy="35" r="3" fill="#10b981"/>
+                                    </svg>
+                                </div>
+                                <div class="placeholder-content">
+                                    <h4>No Net Worth Data</h4>
+                                    <p>Add transactions to track your net worth over time.</p>
+                                    <div class="placeholder-tip">Tip: Enter your starting balance as an income to see your net worth chart in action!</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
-
     <!-- Transaction Modal -->
     <div id="transaction-modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="transaction-modal-title">Add Transaction</h2>
-            </div>
+            <div class="modal-header"><h2 id="transaction-modal-title">Add Transaction</h2></div>
             <form id="transaction-form" class="modal-body">
                 <div class="form-group">
                     <label for="transaction-type">Type</label>
@@ -243,23 +227,18 @@
                         <option value="expense">Expense</option>
                     </select>
                 </div>
-                
                 <div class="form-group">
                     <label for="transaction-amount">Amount</label>
                     <input type="number" id="transaction-amount" name="amount" step="0.01" min="0.01" required>
                 </div>
-                
                 <div class="form-group">
                     <label for="transaction-description">Description</label>
                     <input type="text" id="transaction-description" name="description" required>
                 </div>
-                
                 <div class="form-group">
                     <label for="transaction-category">Category</label>
-                    <div style="display:flex;align-items:center;gap:0.5rem;">
-                        <select id="transaction-category" name="category" required>
-                            <option value="">Select category</option>
-                        </select>
+                    <div class="category-select-row">
+                        <select id="transaction-category" name="category" required><option value="">Select category</option></select>
                         <button type="button" id="manage-categories-btn" class="btn btn-icon" title="Manage Categories"><i class="fas fa-cog"></i></button>
                     </div>
                 </div>
@@ -278,11 +257,11 @@
                 <div class="form-group">
                     <label for="transaction-attachment">Attachment</label>
                     <input type="file" id="transaction-attachment" name="attachment" accept="image/*,.pdf,.txt,.doc,.docx">
-                    <small style="color:var(--text-secondary);">Optional. Images, PDFs, or documents. Max 1MB.</small>
+                    <small>Optional. Images, PDFs, or documents. Max 1MB.</small>
                 </div>
                 <div class="form-group" id="recurring-fields">
                     <label><input type="checkbox" id="transaction-recurring" name="recurring"> Recurring</label>
-                    <div id="recurring-options" style="display:none; margin-top:0.5rem;">
+                    <div id="recurring-options">
                         <label for="recurring-frequency">Every</label>
                         <select id="recurring-frequency" name="recurring-frequency">
                             <option value="monthly">Month</option>
@@ -290,10 +269,16 @@
                             <option value="yearly">Year</option>
                         </select>
                         <label for="recurring-count">for</label>
-                        <input type="number" id="recurring-count" name="recurring-count" min="1" max="60" value="1" style="width:60px;"> times
+                        <input type="number" id="recurring-count" name="recurring-count" min="1" max="60" value="1"> times
                     </div>
                 </div>
-                
+                <div class="form-group">
+                    <label for="transaction-template-select">Templates</label>
+                    <select id="transaction-template-select">
+                        <option value="">Select a template...</option>
+                    </select>
+                    <button type="button" id="save-template-btn" class="btn btn-secondary" style="margin-top:8px;">Save as Template</button>
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" id="cancel-transaction">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="save-transaction">Save Transaction</button>
@@ -301,29 +286,22 @@
             </form>
         </div>
     </div>
-
     <!-- Category Manager Modal -->
     <div id="category-modal" class="modal">
-        <div class="modal-content" style="max-width:400px;">
-            <div class="modal-header">
-                <h2>Manage Categories</h2>
-            </div>
+        <div class="modal-content">
+            <div class="modal-header"><h2>Manage Categories</h2></div>
             <div class="modal-body">
-                <ul id="category-list" style="margin-bottom:1rem;"></ul>
-                <div style="display:flex;gap:0.5rem;align-items:center;">
-                    <input type="text" id="new-category-input" placeholder="New category" style="flex:1;">
+                <ul id="category-list"></ul>
+                <div class="category-add-row">
+                    <input type="text" id="new-category-input" placeholder="New category">
                     <button class="btn btn-success" id="add-category-btn"><i class="fas fa-plus"></i></button>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="close-category-modal">Close</button>
-            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" id="close-category-modal">Close</button></div>
         </div>
     </div>
-
     <!-- Notification Container -->
     <div id="notifications" class="notifications"></div>
-
     <!-- Scripts -->
     <script src="storage.js"></script>
     <script src="main.js"></script>
