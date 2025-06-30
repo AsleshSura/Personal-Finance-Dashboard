@@ -93,7 +93,61 @@ class FinanceApp {
             (tx.notes && tx.notes.toLowerCase().includes(lower))
         );
     }
-    // Similar methods for budgets, bills, goals can be added here
+
+    // --- More Utility & Analytics Functions ---
+    getTopCategories(n = 3) {
+        const counts = {};
+        this.state.transactions.forEach(tx => {
+            if (!counts[tx.category]) counts[tx.category] = 0;
+            counts[tx.category] += parseFloat(tx.amount);
+        });
+        return Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, n)
+            .map(([cat, amt]) => ({ category: cat, total: amt }));
+    }
+
+    getBiggestExpense() {
+        return this.state.transactions
+            .filter(tx => tx.type === 'expense')
+            .reduce((max, tx) => (!max || parseFloat(tx.amount) > parseFloat(max.amount)) ? tx : max, null);
+    }
+
+    getMostFrequentTransaction() {
+        const freq = {};
+        this.state.transactions.forEach(tx => {
+            const key = tx.description + '|' + tx.amount + '|' + tx.category;
+            freq[key] = (freq[key] || 0) + 1;
+        });
+        let maxKey = null, maxCount = 0;
+        for (const key in freq) {
+            if (freq[key] > maxCount) {
+                maxCount = freq[key];
+                maxKey = key;
+            }
+        }
+        if (!maxKey) return null;
+        const [description, amount, category] = maxKey.split('|');
+        return { description, amount, category, count: maxCount };
+    }
+
+    getMonthlyTotals() {
+        const monthly = {};
+        this.state.transactions.forEach(tx => {
+            const ym = tx.date.slice(0, 7);
+            if (!monthly[ym]) monthly[ym] = 0;
+            monthly[ym] += parseFloat(tx.amount) * (tx.type === 'income' ? 1 : -1);
+        });
+        return monthly;
+    }
+
+    // --- Transaction Duplicate Feature ---
+    duplicateTransaction(id) {
+        const tx = this.state.transactions.find(t => t.id === id);
+        if (!tx) return;
+        const newTx = { ...tx, id: utils.generateId(), date: new Date().toISOString().slice(0, 10) };
+        this.addTransaction(newTx);
+    }
 }
 
 class DashboardPage {
@@ -504,6 +558,7 @@ function renderTransactionsPage() {
                     <div class="transaction-actions">
                         ${!isGoal ? `<button class="btn btn-secondary btn-edit-tx" title="Edit"><i class="fas fa-edit"></i></button>
                         <button class="btn btn-danger btn-delete-tx" title="Delete"><i class="fas fa-trash"></i></button>` : ''}
+                        <button class="btn btn-secondary btn-duplicate-tx" title="Duplicate"><i class="fas fa-copy"></i></button>
                     </div>
                 </div>
                 `;
@@ -526,6 +581,15 @@ function renderTransactionsPage() {
                 updateDashboardSummary && updateDashboardSummary();
                 renderRecentTransactions && renderRecentTransactions();
             }
+        };
+    });
+    // Add duplicate button event listeners
+    document.querySelectorAll('.btn-duplicate-tx').forEach(btn => {
+        btn.onclick = function() {
+            const id = btn.closest('.transaction-item').getAttribute('data-id');
+            window.app.duplicateTransaction(id);
+            renderTransactionsPage();
+            renderRecentTransactions && renderRecentTransactions();
         };
     });
     // Filter favorites
@@ -1525,6 +1589,7 @@ renderTransactionsPage = function() {
                     <div class="transaction-actions">
                         ${!isGoal ? `<button class="btn btn-secondary btn-edit-tx" title="Edit"><i class="fas fa-edit"></i></button>
                         <button class="btn btn-danger btn-delete-tx" title="Delete"><i class="fas fa-trash"></i></button>` : ''}
+                        <button class="btn btn-secondary btn-duplicate-tx" title="Duplicate"><i class="fas fa-copy"></i></button>
                     </div>
                 </div>
                 `;
@@ -1547,6 +1612,15 @@ renderTransactionsPage = function() {
                 updateDashboardSummary && updateDashboardSummary();
                 renderRecentTransactions && renderRecentTransactions();
             }
+        };
+    });
+    // Add duplicate button event listeners
+    document.querySelectorAll('.btn-duplicate-tx').forEach(btn => {
+        btn.onclick = function() {
+            const id = btn.closest('.transaction-item').getAttribute('data-id');
+            window.app.duplicateTransaction(id);
+            renderTransactionsPage();
+            renderRecentTransactions && renderRecentTransactions();
         };
     });
     // Filter favorites
@@ -1576,3 +1650,41 @@ renderTransactionsPage = function() {
     }
 };
 // --- END SUBTAB RENDERING ---
+
+// --- DASHBOARD ANALYTICS PANEL ---
+function renderDashboardAnalytics() {
+    const panel = document.getElementById('dashboard-analytics-panel');
+    if (!panel) return;
+    const topCats = window.app.getTopCategories();
+    const biggest = window.app.getBiggestExpense();
+    const frequent = window.app.getMostFrequentTransaction();
+    panel.innerHTML = `
+        <h3>Quick Analytics</h3>
+        <div><b>Top Categories:</b> ${topCats.map(c => `${c.category} ($${c.total.toFixed(2)})`).join(', ')}</div>
+        <div><b>Biggest Expense:</b> ${biggest ? `${biggest.description} ($${parseFloat(biggest.amount).toFixed(2)})` : 'N/A'}</div>
+        <div><b>Most Frequent:</b> ${frequent ? `${frequent.description} (${frequent.count}×)` : 'N/A'}</div>
+    `;
+}
+document.addEventListener('DOMContentLoaded', () => {
+    // Add analytics panel to dashboard
+    const dash = document.getElementById('dashboard-page');
+    if (dash && !document.getElementById('dashboard-analytics-panel')) {
+        const panel = document.createElement('div');
+        panel.id = 'dashboard-analytics-panel';
+        panel.className = 'dashboard-analytics-panel';
+        dash.appendChild(panel);
+    }
+    renderDashboardAnalytics();
+});
+// Re-render analytics after transaction changes
+const origAddTx = window.app.addTransaction.bind(window.app);
+window.app.addTransaction = function(tx) {
+    origAddTx(tx);
+    renderDashboardAnalytics && renderDashboardAnalytics();
+};
+const origDeleteTx = window.app.deleteTransaction.bind(window.app);
+window.app.deleteTransaction = function(id) {
+    origDeleteTx(id);
+    renderDashboardAnalytics && renderDashboardAnalytics();
+};
+// --- END DASHBOARD ANALYTICS PANEL ---

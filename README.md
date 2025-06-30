@@ -1,51 +1,63 @@
-# Personal Finance Dashboard - Static Offline Web App
+# Personal Finance Dashboard
 
-A simple, offline personal finance dashboard that runs entirely in your web browser. No installation, server, or database required—just open `frontend/index.html` in any browser.
-
-## 🚀 Features
-
-- ✅ **Transaction Management** - Add, edit, delete, and search transactions
-- ✅ **Category Filtering** - Organize transactions by categories
-- ✅ **Local Storage** - All data stored in your browser (localStorage)
-- ✅ **Offline Operation** - No internet connection required
-- ✅ **No Installation** - Works as a static website
-
-## 🏁 How to Use
-
-1. Open the `frontend/index.html` file in your web browser.
-2. All features work offline and data is saved in your browser.
-3. No setup, server, or installation required.
-
-## 🗂️ Project Structure
-
-```
-Personal-Finance-Dashboard/
-├── frontend/
-│   ├── index.html         # Main app interface
-│   ├── css/style.css      # App styling
-│   └── js/
-│       ├── storage.js     # LocalStorage CRUD helpers
-│       ├── main.js        # Main app logic (localStorage-based)
-│       ├── app.js         # (legacy, to be cleaned)
-│       ├── dashboard.js   # (legacy, to be cleaned)
-│       ├── transactions.js# (legacy, to be cleaned)
-│       └── ...
-├── README.md              # This file
-└── ... (no backend/server files)
-```
-
-## 💾 Data Storage
-
-- **Type**: Browser localStorage
-- **Location**: Your browser (no files created)
-- **No setup required** - data is saved automatically
-
-## ⚙️ Technical Details
-
-- **Frontend**: HTML, CSS, JavaScript (Vanilla)
-- **No backend/server/database**
-- **No authentication** - simple offline app
+A modern, privacy-first web app for managing your personal finances. Track income, expenses, budgets, bills, goals, and more—all in your browser, with no server or signup required.
 
 ---
 
-**Note:** This project is now a pure static website. All backend, server, and database files have been removed. For best results, use a modern browser (Chrome, Edge, Firefox, Safari, etc.).
+## 🚀 Features
+- **Dashboard:** Overview cards, charts, and analytics
+- **Transactions:** Add, edit, delete, duplicate, tag, favorite, and attach files/notes
+- **Budgets:** Set, track, and get alerts for custom budgets
+- **Bills & Goals:** Manage recurring bills and savings goals
+- **Calendar & Trends:** Visualize spending by date and category
+- **Advanced Search:** Filter by type, category, tags, amount, and more
+- **Import/Export:** CSV for all data types, plus backup/restore
+- **Dark/Light Mode:** Theme toggle and accent color customization
+- **All Data Local:** 100% localStorage—your data never leaves your device
+
+---
+
+## 🛠️ Getting Started
+1. **Download or clone this repository.**
+2. Open `index.html` in your browser (no build or server needed).
+3. Start adding your transactions and customizing your dashboard!
+
+---
+
+## 📁 Project Structure
+- `index.html` — Main UI and modals
+- `frontend/css/style.css` — Styles and themes
+- `frontend/js/main.js` — App logic and features
+- `storage.js` — LocalStorage helpers
+
+---
+
+## 🧩 Customization
+- Add/edit categories, tags, and dashboard widgets
+- Change theme and accent colors
+- Export/import your data for backup or migration
+
+---
+
+## 🔒 Privacy & Data
+- All data is stored in your browser (localStorage)
+- No accounts, no tracking, no cloud—your data is yours
+
+---
+
+## 🗺️ Roadmap Ideas
+- Multi-currency support
+- Net worth and investment tracking
+- AI-powered insights and suggestions
+- Shared budgets/accounts
+- Calendar/notification integrations
+
+---
+
+## 📸 Screenshots
+_Add screenshots here to showcase the dashboard and features._
+
+---
+
+## 📄 License
+MIT
