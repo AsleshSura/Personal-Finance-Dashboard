@@ -14,6 +14,7 @@
     "build": "echo 'Build process for production deployment'",
     "test": "echo 'Tests will be implemented'",
     "lint": "echo 'Linting will be implemented'",
+    "health-check": "node health-check.js",
     "seed": "cd backend && node scripts/seed.js"
   },
   "keywords": [
