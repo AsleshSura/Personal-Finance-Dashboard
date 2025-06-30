@@ -1,9 +1,11 @@
 // Global App Configuration
 const CONFIG = {
-    API_BASE_URL: 'http://localhost:5000/api',
+    API_BASE_URL: window.location.hostname.includes('vercel.app') 
+        ? 'https://personal-finance-dashboard-production.up.railway.app/api'
+        : 'http://localhost:5000/api',
     TOKEN_KEY: 'finance_dashboard_token',
     USER_KEY: 'finance_dashboard_user',
-    GITHUB_PAGES_MODE: window.location.hostname.includes('github.io') || window.location.protocol === 'file:'
+    PRODUCTION_MODE: true
 };
 
 // App State Management
@@ -45,18 +47,7 @@ class AppState {
     }
 
     isAuthenticated() {
-        return CONFIG.GITHUB_PAGES_MODE || !!(this.token && this.user);
-    }
-
-    setDemoUser() {
-        if (CONFIG.GITHUB_PAGES_MODE) {
-            this.user = {
-                id: 'demo-user',
-                name: 'Demo User',
-                email: 'demo@example.com'
-            };
-            this.token = 'demo-token';
-        }
+        return !!(this.token && this.user);
     }
 }
 
@@ -67,11 +58,6 @@ class ApiService {
     }
 
     async request(endpoint, options = {}) {
-        // Return demo data if in GitHub Pages mode
-        if (CONFIG.GITHUB_PAGES_MODE) {
-            return this.getDemoData(endpoint);
-        }
-
         const url = `${this.baseURL}${endpoint}`;
         const config = {
             headers: {
@@ -141,106 +127,6 @@ class ApiService {
         });
     }
 
-    getDemoData(endpoint) {
-        // Demo data for GitHub Pages
-        const demoData = {
-            '/user/profile': {
-                id: 'demo-user',
-                name: 'Demo User',
-                email: 'demo@example.com',
-                totalBalance: 5432.10,
-                monthlyIncome: 4500.00,
-                monthlyExpenses: 3250.75
-            },
-            '/transactions': [
-                {
-                    id: '1',
-                    type: 'income',
-                    amount: 4500.00,
-                    category: 'Salary',
-                    description: 'Monthly Salary',
-                    date: new Date().toISOString(),
-                    account: 'Checking'
-                },
-                {
-                    id: '2',
-                    type: 'expense',
-                    amount: 1200.00,
-                    category: 'Rent',
-                    description: 'Monthly Rent',
-                    date: new Date(Date.now() - 86400000).toISOString(),
-                    account: 'Checking'
-                },
-                {
-                    id: '3',
-                    type: 'expense',
-                    amount: 450.50,
-                    category: 'Groceries',
-                    description: 'Weekly Shopping',
-                    date: new Date(Date.now() - 172800000).toISOString(),
-                    account: 'Checking'
-                }
-            ],
-            '/budgets': [
-                {
-                    id: '1',
-                    category: 'Groceries',
-                    budgeted: 600,
-                    spent: 450.50,
-                    remaining: 149.50,
-                    month: new Date().getMonth() + 1,
-                    year: new Date().getFullYear()
-                },
-                {
-                    id: '2',
-                    category: 'Entertainment',
-                    budgeted: 300,
-                    spent: 125.75,
-                    remaining: 174.25,
-                    month: new Date().getMonth() + 1,
-                    year: new Date().getFullYear()
-                }
-            ],
-            '/bills': [
-                {
-                    id: '1',
-                    name: 'Electric Bill',
-                    amount: 85.50,
-                    dueDate: new Date(Date.now() + 604800000).toISOString(),
-                    isPaid: false,
-                    category: 'Utilities'
-                },
-                {
-                    id: '2',
-                    name: 'Internet',
-                    amount: 59.99,
-                    dueDate: new Date(Date.now() + 1209600000).toISOString(),
-                    isPaid: true,
-                    category: 'Utilities'
-                }
-            ],
-            '/goals': [
-                {
-                    id: '1',
-                    name: 'Emergency Fund',
-                    targetAmount: 10000,
-                    currentAmount: 6500,
-                    targetDate: '2025-12-31',
-                    category: 'Savings'
-                },
-                {
-                    id: '2',
-                    name: 'Vacation Fund',
-                    targetAmount: 3000,
-                    currentAmount: 850,
-                    targetDate: '2025-08-15',
-                    category: 'Travel'
-                }
-            ]
-        };
-
-        return Promise.resolve(demoData[endpoint] || {});
-    }
 }
 
 // Notification System
@@ -362,20 +248,16 @@ class FinanceApp {
         // Set initial theme
         document.documentElement.setAttribute('data-theme', this.state.theme);
         
-        // Check authentication or GitHub Pages mode
-        if (CONFIG.GITHUB_PAGES_MODE || this.state.isAuthenticated()) {
-            if (CONFIG.GITHUB_PAGES_MODE) {
+        // Check authentication
+        if (this.state.isAuthenticated()) {
+            try {
+                // Verify token is still valid
+                await this.api.get('/auth/me');
                 this.showApp();
-            } else {
-                try {
-                    // Verify token is still valid
-                    await this.api.get('/auth/me');
-                    this.showApp();
-                } catch (error) {
-                    console.error('Token validation failed:', error);
-                    this.state.clearAuth();
-                    this.showAuth();
-                }
+            } catch (error) {
+                console.error('Token validation failed:', error);
+                this.state.clearAuth();
+                this.showAuth();
             }
         } else {
             this.showAuth();
@@ -434,12 +316,6 @@ class FinanceApp {
     showApp() {
         document.getElementById('auth-modal').style.display = 'none';
         document.getElementById('app').style.display = 'flex';
-        
-        // Show GitHub Pages demo banner if needed
-        if (CONFIG.GITHUB_PAGES_MODE) {
-            document.getElementById('github-demo-banner').style.display = 'block';
-            document.getElementById('app').classList.add('github-pages-mode');
-        }
         
         // Update user info
         document.getElementById('user-name').textContent = this.state.user?.name || 'User';
@@ -585,12 +461,6 @@ class FinanceApp {
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new FinanceApp();
-    
-    // Set demo user if in GitHub Pages mode
-    if (CONFIG.GITHUB_PAGES_MODE) {
-        app.state.setDemoUser();
-        console.log('🎭 GitHub Pages Demo Mode - Explore all features with sample data!');
-    }
 });
 
 // Export for use in other modules
