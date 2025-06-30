@@ -1557,7 +1557,22 @@ body {
     margin-top: 0.5rem;
 }
 
-/* --- Reports Download Section --- */
+/* --- Reports Section Centering & Layout --- */
+.reports-center-outer {
+    width: 100%;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+.reports-center-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
 .reports-downloads {
     display: flex;
     flex-direction: column;
@@ -1568,8 +1583,11 @@ body {
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     margin-top: 2rem;
-    max-width: 600px;
+    max-width: 650px;
+    width: 100%;
 }
+
+/* Download Range Form (Reports) */
 .download-range-form {
     display: flex;
     flex-wrap: wrap;
@@ -1595,17 +1613,16 @@ body {
 .download-range-form input[type="date"]:focus {
     border-color: var(--primary-color);
 }
-.download-range-form button {
-    min-width: 260px;
-    width: 100%;
-    margin-left: 0;
-}
+.download-range-form button,
 #download-all-btn {
     min-width: 260px;
     width: 100%;
     font-size: 1rem;
     padding: 0.7rem 1.2rem;
+    margin-left: 0;
 }
+
+/* Upload Form (Reports) */
 .upload-form {
     display: flex;
     align-items: center;
@@ -1624,145 +1641,6 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-/* --- Recurring Transaction Switch --- */
-#recurring-fields {
-    display: flex;
-    align-items: center;
-    gap: 1.2rem;
-    margin-top: 0.5rem;
-}
-#recurring-fields label {
-    display: flex;
-    align-items: center;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 0;
-    gap: 0.7rem;
-    font-size: 1.08rem;
-    cursor: pointer;
-}
-#transaction-recurring {
-    appearance: none;
-    width: 2.2rem;
-    height: 1.2rem;
-    background: var(--bg-tertiary);
-    border: 2px solid var(--primary-color);
-    border-radius: 1.2rem;
-    position: relative;
-    outline: none;
-    cursor: pointer;
-    transition: background 0.2s, border 0.2s;
-    margin-right: 0.2rem;
-    margin-left: 0;
-    box-sizing: border-box;
-    vertical-align: middle;
-    display: inline-block;
-}
-#transaction-recurring:checked {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-}
-#transaction-recurring::before {
-    content: '';
-    position: absolute;
-    left: 0.18rem;
-    top: 0.18rem;
-    width: 0.85rem;
-    height: 0.85rem;
-    background: #fff;
-    border-radius: 50%;
-    transition: transform 0.2s cubic-bezier(.4,0,.2,1);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-#transaction-recurring:checked::before {
-    transform: translateX(1rem);
-}
-#recurring-fields label {
-    display: flex;
-    align-items: center;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 0;
-    gap: 0.7rem;
-    font-size: 1.08rem;
-    cursor: pointer;
-}
-
-/* --- Category Manager Modal --- */
-#category-modal .modal-content {
-    max-width: 400px;
-}
-#category-list {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 1rem 0;
-}
-#category-list li {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.4rem 0.2rem;
-    border-bottom: 1px solid var(--border-color);
-    gap: 0.5rem;
-}
-#category-list li:last-child {
-    border-bottom: none;
-}
-.category-actions {
-    display: flex;
-    gap: 0.3rem;
-}
-#new-category-input {
-    padding: 0.4rem 0.7rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-size: 1rem;
-    outline: none;
-    transition: border 0.2s;
-}
-#new-category-input:focus {
-    border-color: var(--primary-color);
-}
-
-/* Import/Export Table Styles */
-.import-export-table {
-  width: 100%;
-  max-width: 600px;
-  margin: 1.2rem 0 0 0;
-  border-collapse: separate;
-  border-spacing: 1rem 0.7rem;
-}
-.import-export-table td {
-  padding: 0;
-  vertical-align: middle;
-  border: none;
-  background: none;
-}
-.import-export-table .btn {
-  width: 100%;
-  min-width: 180px;
-  margin: 0;
-  box-sizing: border-box;
-}
-.import-export-table label.btn {
-  display: inline-block;
-  width: 100%;
-  min-width: 180px;
-  margin: 0;
-  text-align: center;
-}
-@media (max-width: 700px) {
-  .import-export-table {
-    border-spacing: 0.5rem 0.5rem;
-  }
-  .import-export-table .btn, .import-export-table label.btn {
-    min-width: 120px;
-    font-size: 0.95rem;
-  }
 }
 
 /* Chart Placeholder (Trends) */

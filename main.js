@@ -615,48 +615,53 @@ function renderTransactionsPage() {
 function renderBudgetsPage() {
     const page = document.getElementById('budgets-page');
     if (!page) return;
-    const budgets = window.app.state.budgets || [];
-    if (!budgets.length) {
-        page.innerHTML = '<div class="empty-state"><i class="fas fa-piggy-bank"></i><p>No budgets set yet.</p></div>';
-        return;
-    }
+    const budgets = Storage.getBudgets();
     page.innerHTML = `
-        <h2 class="budgets-title">Budgets</h2>
-        <form id="budget-form" class="budget-form">
-            <div class="budget-form-group">
-                <label for="budget-category">Category</label>
-                <select id="budget-category" required>
-                    <option value="">Select category</option>
-                    ${DEFAULT_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
-                </select>
+        <div class="budgets-card">
+            <div class="budgets-header-row">
+                <h2 class="budgets-title">Budgets</h2>
             </div>
-            <div class="budget-form-group">
-                <label for="budget-amount">Amount</label>
-                <input type="number" id="budget-amount" min="0.01" step="0.01" required />
+            <div class="budgets-chart-container">
+                <canvas id="budgets-pie-chart" width="380" height="380"></canvas>
             </div>
-            <div class="budget-form-group">
-                <label for="budget-period">Period</label>
-                <select id="budget-period" required>
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary budget-add-btn">Add Budget</button>
-        </form>
-        <div id="budgets-list"></div>
+            <div id="budgets-list"></div>
+        </div>
     `;
     renderBudgetsList();
-    document.getElementById('budget-form').onsubmit = function(e) {
-        e.preventDefault();
-        const category = document.getElementById('budget-category').value;
-        const amount = parseFloat(document.getElementById('budget-amount').value);
-        const period = document.getElementById('budget-period').value;
-        if (!category || !amount || !period) return;
-        window.app.state.budgets.push({ id: utils.generateId(), category, amount, period });
-        Storage.saveBudgets(window.app.state.budgets);
-        renderBudgetsList();
-        this.reset();
-    };
+    renderBudgetsPieChart(budgets);
+}
+
+function renderBudgetsPieChart(budgets) {
+    const ctx = document.getElementById('budgets-pie-chart');
+    if (!ctx || !budgets.length) return;
+    const labels = budgets.map(b => b.name);
+    const data = budgets.map(b => Number(b.amount) || 0);
+    const backgroundColors = [
+        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#a78bfa', '#f472b6', '#06b6d4', '#f87171', '#34d399', '#fbbf24', '#6366f1'
+    ];
+    if (window.budgetsPieChart) window.budgetsPieChart.destroy();
+    window.budgetsPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels,
+            datasets: [{
+                data,
+                backgroundColor: backgroundColors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { position: 'bottom', labels: { color: getChartFontColor() } },
+                datalabels: {
+                    color: getChartFontColor(),
+                    font: { weight: 'bold', size: 16 },
+                    formatter: v => v ? v : ''
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
 }
 
 function renderBudgetsList() {
