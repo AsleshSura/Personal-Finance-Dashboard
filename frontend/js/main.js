@@ -685,14 +685,245 @@ window.deleteBill = function(id) {
 function renderGoalsPage() {
     const page = document.getElementById('goals-page');
     if (!page) return;
-    page.innerHTML = '<h2>Goals</h2><div class="empty-state"><p>Goal setting coming soon!</p></div>';
+    const goals = Storage.getGoals();
+    page.innerHTML = `
+        <div class="bills-card goals-card">
+            <div class="bills-header-row">
+                <h2 class="bills-title">Goals</h2>
+                <button class="btn btn-primary" id="add-goal-btn">+ Add Goal</button>
+            </div>
+            <div id="goals-list"></div>
+        </div>
+        <div id="goal-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header"><h2 id="goal-modal-title">Add Goal</h2></div>
+                <form id="goal-form" class="modal-body">
+                    <div class="form-group">
+                        <label for="goal-name">Name</label>
+                        <input type="text" id="goal-name" name="name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-amount">Target Amount</label>
+                        <input type="number" id="goal-amount" name="amount" step="0.01" min="0.01" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-date">Target Date</label>
+                        <input type="date" id="goal-date" name="date" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-desc">Description (optional)</label>
+                        <textarea id="goal-desc" name="desc" rows="2"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancel-goal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Goal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    renderGoalsList();
+    // Modal logic
+    document.getElementById('add-goal-btn').onclick = () => {
+        document.getElementById('goal-modal').classList.add('show');
+        document.getElementById('goal-modal-title').textContent = 'Add Goal';
+        document.getElementById('goal-form').reset();
+        window.goalEditId = null;
+    };
+    document.getElementById('cancel-goal').onclick = () => {
+        document.getElementById('goal-modal').classList.remove('show');
+    };
+    document.getElementById('goal-modal').onclick = (e) => {
+        if (e.target === e.currentTarget) {
+            e.currentTarget.classList.remove('show');
+        }
+    };
+    document.getElementById('goal-form').onsubmit = function(e) {
+        e.preventDefault();
+        const name = document.getElementById('goal-name').value.trim();
+        const amount = parseFloat(document.getElementById('goal-amount').value);
+        const date = document.getElementById('goal-date').value;
+        const desc = document.getElementById('goal-desc').value.trim();
+        if (!name || isNaN(amount) || !date) return;
+        let goals = Storage.getGoals();
+        if (window.goalEditId) {
+            // Edit
+            goals = goals.map(g => g.id === window.goalEditId ? { ...g, name, amount, date, desc } : g);
+            window.goalEditId = null;
+        } else {
+            // Add
+            goals.push({ id: utils.generateId(), name, amount, date, desc, saved: 0, status: 'active' });
+        }
+        Storage.saveGoals(goals);
+        renderGoalsList();
+        document.getElementById('goal-modal').classList.remove('show');
+        e.target.reset();
+    };
 }
 
-function renderReportsPage() {
-    const page = document.getElementById('reports-page');
-    if (!page) return;
-    page.innerHTML = '<h2>Reports</h2><div class="empty-state"><p>Reports and analytics coming soon!</p></div>';
+function renderGoalsList() {
+    const container = document.getElementById('goals-list');
+    if (!container) return;
+    const goals = Storage.getGoals();
+    if (!goals.length) {
+        container.innerHTML = '<div class="bills-empty">No goals yet. Add one to get started!</div>';
+        return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    container.innerHTML = `
+        <table class="bills-table goals-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Target</th>
+                    <th>Saved</th>
+                    <th>Due</th>
+                    <th>Status</th>
+                    <th>Progress</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${goals.map(goal => {
+                    let status = goal.status || 'active';
+                    if (status !== 'completed' && goal.date < today) status = 'overdue';
+                    if (goal.saved >= goal.amount) status = 'completed';
+                    let statusClass = '';
+                    if (status === 'overdue') statusClass = 'bill-status-overdue';
+                    if (status === 'completed') statusClass = 'bill-status-done';
+                    // Progress bar
+                    const percent = Math.min(100, Math.round((goal.saved / goal.amount) * 100));
+                    let progressBar = `<div style="background:#e2e8f0;width:100%;height:14px;border-radius:8px;overflow:hidden;">
+                        <div style="background:var(--primary-color);width:${percent}%;height:100%;transition:width 0.3s;"></div>
+                    </div>
+                    <div style="font-size:0.95em;margin-top:2px;">${percent}%</div>`;
+                    // Actions
+                    let actions = `
+                        <button class="btn btn-edit" title="Edit" onclick="editGoal('${goal.id}')">Edit</button>
+                        <button class="btn btn-delete" title="Delete" onclick="deleteGoal('${goal.id}')">Delete</button>
+                        <button class="btn btn-success" title="Add Savings" onclick="addToGoal('${goal.id}')">💰</button>
+                    `;
+                    return `
+                    <tr>
+                        <td><b>${goal.name}</b><br><span style="font-size:0.95em;color:var(--text-secondary)">${goal.desc || ''}</span></td>
+                        <td>${window.utils.formatCurrency(goal.amount)}</td>
+                        <td>${window.utils.formatCurrency(goal.saved || 0)}</td>
+                        <td>${goal.date}</td>
+                        <td class="${statusClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</td>
+                        <td>${progressBar}</td>
+                        <td>${actions}</td>
+                    </tr>
+                    `;
+                }).join('')}
+            </tbody>
+        </table>
+    `;
 }
+
+window.editGoal = function(id) {
+    const goals = Storage.getGoals();
+    const goal = goals.find(g => g.id === id);
+    if (!goal) return;
+    document.getElementById('goal-modal').classList.add('show');
+    document.getElementById('goal-modal-title').textContent = 'Edit Goal';
+    document.getElementById('goal-name').value = goal.name;
+    document.getElementById('goal-amount').value = goal.amount;
+    document.getElementById('goal-date').value = goal.date;
+    document.getElementById('goal-desc').value = goal.desc || '';
+    window.goalEditId = id;
+};
+
+window.deleteGoal = function(id) {
+    let goals = Storage.getGoals();
+    let goal = goals.find(g => g.id === id);
+    if (goal && goal.saved && goal.saved > 0) {
+        // Add transaction for returning money to account
+        const returnTx = {
+            type: 'income',
+            category: 'Savings',
+            amount: goal.saved,
+            date: new Date().toISOString().slice(0, 10),
+            description: `Goal deleted: ${goal.name}`
+        };
+        let txs = (window.app && typeof window.app.getTransactions === 'function') ? window.app.getTransactions() : Storage.getTransactions();
+        if (window.app && typeof window.app.addTransaction === 'function') {
+            window.app.addTransaction(returnTx);
+        } else {
+            returnTx.id = utils.generateId();
+            txs.push(returnTx);
+            Storage.saveTransactions(txs);
+        }
+    }
+    goals = goals.filter(g => g.id !== id);
+    Storage.saveGoals(goals);
+    renderGoalsList();
+    NotificationService.showSuccess('Goal Deleted');
+};
+
+window.addToGoal = function(id) {
+    const amount = prompt('How much would you like to add to this goal?');
+    const amt = parseFloat(amount);
+    if (isNaN(amt) || amt <= 0) return;
+    // Calculate current balance
+    let txs = (window.app && typeof window.app.getTransactions === 'function') ? window.app.getTransactions() : Storage.getTransactions();
+    let balance = txs.reduce((sum, tx) => {
+        if (tx.type === 'income') return sum + parseFloat(tx.amount);
+        if (tx.type === 'expense') return sum - parseFloat(tx.amount);
+        return sum;
+    }, 0);
+    if (amt > balance) {
+        NotificationService.showError('Insufficient funds in your account to add this amount to your goal.');
+        return;
+    }
+    let goals = Storage.getGoals();
+    let goal = goals.find(g => g.id === id);
+    if (!goal) return;
+    // Add transaction for savings withdrawal
+    const tx = {
+        type: 'expense',
+        category: 'Savings',
+        amount: amt,
+        date: new Date().toISOString().slice(0, 10),
+        description: `Added to goal: ${goal.name}`
+    };
+    if (window.app && typeof window.app.addTransaction === 'function') {
+        window.app.addTransaction(tx);
+    } else {
+        tx.id = utils.generateId();
+        txs.push(tx);
+        Storage.saveTransactions(txs);
+    }
+    // Update goal
+    let updatedGoals = goals.map(g => {
+        if (g.id === id) {
+            let newSaved = (g.saved || 0) + amt;
+            // If goal is reached or exceeded, mark as achieved and return money
+            if (newSaved >= g.amount) {
+                // Add transaction for returning money to account
+                const returnTx = {
+                    type: 'income',
+                    category: 'Savings',
+                    amount: g.amount,
+                    date: new Date().toISOString().slice(0, 10),
+                    description: `Goal achieved: ${g.name}`
+                };
+                if (window.app && typeof window.app.addTransaction === 'function') {
+                    window.app.addTransaction(returnTx);
+                } else {
+                    returnTx.id = utils.generateId();
+                    txs.push(returnTx);
+                    Storage.saveTransactions(txs);
+                }
+                return { ...g, saved: g.amount, status: 'achieved' };
+            }
+            return { ...g, saved: newSaved };
+        }
+        return g;
+    });
+    Storage.saveGoals(updatedGoals);
+    renderGoalsList();
+};
+
 
 function handleTabRendering() {
     document.querySelectorAll('.menu-item').forEach(item => {
@@ -1042,65 +1273,242 @@ window.deleteBill = function(id) {
 function renderGoalsPage() {
     const page = document.getElementById('goals-page');
     if (!page) return;
-    page.innerHTML = '<h2>Goals</h2><div class="empty-state"><p>Goal setting coming soon!</p></div>';
-}
-
-function renderReportsPage() {
-    const page = document.getElementById('reports-page');
-    if (!page) return;
-    page.innerHTML = '<h2>Reports</h2><div class="empty-state"><p>Reports and analytics coming soon!</p></div>';
-}
-
-function handleTabRendering() {
-    document.querySelectorAll('.menu-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const page = item.getAttribute('data-page');
-            if (page === 'dashboard') {
-                updateDashboardSummary();
-                renderRecentTransactions();
-            } else if (page === 'transactions') {
-                renderTransactionsPage();
-            } else if (page === 'budgets') {
-                renderBudgetsPage();
-            } else if (page === 'bills') {
-                renderBillsPage();
-            } else if (page === 'goals') {
-                renderGoalsPage();
-            } else if (page === 'reports') {
-                renderReportsPage();
-            }
-        });
-    });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Robust Theme toggle
-    function setTheme(theme) {
-        if (theme === 'dark') {
-            document.body.setAttribute('data-theme', 'dark');
-            document.getElementById('theme-toggle').innerHTML = '<i class="fas fa-sun"></i>';
+    const goals = Storage.getGoals();
+    page.innerHTML = `
+        <div class="bills-card goals-card">
+            <div class="bills-header-row">
+                <h2 class="bills-title">Goals</h2>
+                <button class="btn btn-primary" id="add-goal-btn">+ Add Goal</button>
+            </div>
+            <div id="goals-list"></div>
+        </div>
+        <div id="goal-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header"><h2 id="goal-modal-title">Add Goal</h2></div>
+                <form id="goal-form" class="modal-body">
+                    <div class="form-group">
+                        <label for="goal-name">Name</label>
+                        <input type="text" id="goal-name" name="name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-amount">Target Amount</label>
+                        <input type="number" id="goal-amount" name="amount" step="0.01" min="0.01" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-date">Target Date</label>
+                        <input type="date" id="goal-date" name="date" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-desc">Description (optional)</label>
+                        <textarea id="goal-desc" name="desc" rows="2"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancel-goal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Goal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    renderGoalsList();
+    // Modal logic
+    document.getElementById('add-goal-btn').onclick = () => {
+        document.getElementById('goal-modal').classList.add('show');
+        document.getElementById('goal-modal-title').textContent = 'Add Goal';
+        document.getElementById('goal-form').reset();
+        window.goalEditId = null;
+    };
+    document.getElementById('cancel-goal').onclick = () => {
+        document.getElementById('goal-modal').classList.remove('show');
+    };
+    document.getElementById('goal-modal').onclick = (e) => {
+        if (e.target === e.currentTarget) {
+            e.currentTarget.classList.remove('show');
+        }
+    };
+    document.getElementById('goal-form').onsubmit = function(e) {
+        e.preventDefault();
+        const name = document.getElementById('goal-name').value.trim();
+        const amount = parseFloat(document.getElementById('goal-amount').value);
+        const date = document.getElementById('goal-date').value;
+        const desc = document.getElementById('goal-desc').value.trim();
+        if (!name || isNaN(amount) || !date) return;
+        let goals = Storage.getGoals();
+        if (window.goalEditId) {
+            // Edit
+            goals = goals.map(g => g.id === window.goalEditId ? { ...g, name, amount, date, desc } : g);
+            window.goalEditId = null;
         } else {
-            document.body.removeAttribute('data-theme');
-            document.getElementById('theme-toggle').innerHTML = '<i class=\"fas fa-moon\"></i>';
+            // Add
+            goals.push({ id: utils.generateId(), name, amount, date, desc, saved: 0, status: 'active' });
+        }
+        Storage.saveGoals(goals);
+        renderGoalsList();
+        document.getElementById('goal-modal').classList.remove('show');
+        e.target.reset();
+    };
+}
+
+function renderGoalsList() {
+    const container = document.getElementById('goals-list');
+    if (!container) return;
+    const goals = Storage.getGoals();
+    if (!goals.length) {
+        container.innerHTML = '<div class="bills-empty">No goals yet. Add one to get started!</div>';
+        return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    container.innerHTML = `
+        <table class="bills-table goals-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Target</th>
+                    <th>Saved</th>
+                    <th>Due</th>
+                    <th>Status</th>
+                    <th>Progress</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${goals.map(goal => {
+                    let status = goal.status || 'active';
+                    if (status !== 'completed' && goal.date < today) status = 'overdue';
+                    if (goal.saved >= goal.amount) status = 'completed';
+                    let statusClass = '';
+                    if (status === 'overdue') statusClass = 'bill-status-overdue';
+                    if (status === 'completed') statusClass = 'bill-status-done';
+                    // Progress bar
+                    const percent = Math.min(100, Math.round((goal.saved / goal.amount) * 100));
+                    let progressBar = `<div style="background:#e2e8f0;width:100%;height:14px;border-radius:8px;overflow:hidden;">
+                        <div style="background:var(--primary-color);width:${percent}%;height:100%;transition:width 0.3s;"></div>
+                    </div>
+                    <div style="font-size:0.95em;margin-top:2px;">${percent}%</div>`;
+                    // Actions
+                    let actions = `
+                        <button class="btn btn-edit" title="Edit" onclick="editGoal('${goal.id}')">Edit</button>
+                        <button class="btn btn-delete" title="Delete" onclick="deleteGoal('${goal.id}')">Delete</button>
+                        <button class="btn btn-success" title="Add Savings" onclick="addToGoal('${goal.id}')">💰</button>
+                    `;
+                    return `
+                    <tr>
+                        <td><b>${goal.name}</b><br><span style="font-size:0.95em;color:var(--text-secondary)">${goal.desc || ''}</span></td>
+                        <td>${window.utils.formatCurrency(goal.amount)}</td>
+                        <td>${window.utils.formatCurrency(goal.saved || 0)}</td>
+                        <td>${goal.date}</td>
+                        <td class="${statusClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</td>
+                        <td>${progressBar}</td>
+                        <td>${actions}</td>
+                    </tr>
+                    `;
+                }).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+window.editGoal = function(id) {
+    const goals = Storage.getGoals();
+    const goal = goals.find(g => g.id === id);
+    if (!goal) return;
+    document.getElementById('goal-modal').classList.add('show');
+    document.getElementById('goal-modal-title').textContent = 'Edit Goal';
+    document.getElementById('goal-name').value = goal.name;
+    document.getElementById('goal-amount').value = goal.amount;
+    document.getElementById('goal-date').value = goal.date;
+    document.getElementById('goal-desc').value = goal.desc || '';
+    window.goalEditId = id;
+};
+
+window.deleteGoal = function(id) {
+    let goals = Storage.getGoals();
+    let goal = goals.find(g => g.id === id);
+    if (goal && goal.saved && goal.saved > 0) {
+        // Add transaction for returning money to account
+        const returnTx = {
+            type: 'income',
+            category: 'Savings',
+            amount: goal.saved,
+            date: new Date().toISOString().slice(0, 10),
+            description: `Goal deleted: ${goal.name}`
+        };
+        let txs = (window.app && typeof window.app.getTransactions === 'function') ? window.app.getTransactions() : Storage.getTransactions();
+        if (window.app && typeof window.app.addTransaction === 'function') {
+            window.app.addTransaction(returnTx);
+        } else {
+            returnTx.id = utils.generateId();
+            txs.push(returnTx);
+            Storage.saveTransactions(txs);
         }
     }
-    const themeToggle = document.getElementById('theme-toggle');
-    // Set theme on load
-    setTheme(localStorage.getItem('theme'));
-    if (themeToggle) {
-        themeToggle.onclick = function() {
-            const isDark = document.body.getAttribute('data-theme') === 'dark';
-            const newTheme = isDark ? 'light' : 'dark';
-            setTheme(newTheme);
-            localStorage.setItem('theme', newTheme);
-        };
+    goals = goals.filter(g => g.id !== id);
+    Storage.saveGoals(goals);
+    renderGoalsList();
+    NotificationService.showSuccess('Goal Deleted');
+};
+
+window.addToGoal = function(id) {
+    const amount = prompt('How much would you like to add to this goal?');
+    const amt = parseFloat(amount);
+    if (isNaN(amt) || amt <= 0) return;
+    // Calculate current balance
+    let txs = (window.app && typeof window.app.getTransactions === 'function') ? window.app.getTransactions() : Storage.getTransactions();
+    let balance = txs.reduce((sum, tx) => {
+        if (tx.type === 'income') return sum + parseFloat(tx.amount);
+        if (tx.type === 'expense') return sum - parseFloat(tx.amount);
+        return sum;
+    }, 0);
+    if (amt > balance) {
+        NotificationService.showError('Insufficient funds in your account to add this amount to your goal.');
+        return;
     }
-    handleTabRendering();
-    // Render default dashboard and transactions page content
-    renderTransactionsPage();
-    renderBudgetsPage();
-    renderBillsPage();
-    renderGoalsPage();
-    renderReportsPage();
-});
+    let goals = Storage.getGoals();
+    let goal = goals.find(g => g.id === id);
+    if (!goal) return;
+    // Add transaction for savings withdrawal
+    const tx = {
+        type: 'expense',
+        category: 'Savings',
+        amount: amt,
+        date: new Date().toISOString().slice(0, 10),
+        description: `Added to goal: ${goal.name}`
+    };
+    if (window.app && typeof window.app.addTransaction === 'function') {
+        window.app.addTransaction(tx);
+    } else {
+        tx.id = utils.generateId();
+        txs.push(tx);
+        Storage.saveTransactions(txs);
+    }
+    // Update goal
+    let updatedGoals = goals.map(g => {
+        if (g.id === id) {
+            let newSaved = (g.saved || 0) + amt;
+            // If goal is reached or exceeded, mark as achieved and return money
+            if (newSaved >= g.amount) {
+                // Add transaction for returning money to account
+                const returnTx = {
+                    type: 'income',
+                    category: 'Savings',
+                    amount: g.amount,
+                    date: new Date().toISOString().slice(0, 10),
+                    description: `Goal achieved: ${g.name}`
+                };
+                if (window.app && typeof window.app.addTransaction === 'function') {
+                    window.app.addTransaction(returnTx);
+                } else {
+                    returnTx.id = utils.generateId();
+                    txs.push(returnTx);
+                    Storage.saveTransactions(txs);
+                }
+                return { ...g, saved: g.amount, status: 'achieved' };
+            }
+            return { ...g, saved: newSaved };
+        }
+        return g;
+    });
+    Storage.saveGoals(updatedGoals);
+    renderGoalsList();
+};
 // --- END BUDGET FUNCTIONALITY ---
