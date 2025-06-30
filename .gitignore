@@ -11,10 +11,6 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# Uploads and user data
-backend/uploads/
-uploads/
-
 # Logs
 logs
 *.log
@@ -52,6 +48,6 @@ temp/
 dist/
 build/
 
-# Database
-*.sqlite
-*.db
+# Electron build outputs
+app/
+release/
