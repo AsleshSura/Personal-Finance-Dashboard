@@ -1557,7 +1557,24 @@ html[data-theme="dark"] .budget-list-entry {
     margin-top: 0.5rem;
 }
 
-/* --- Reports Section Centering & Layout --- */
+/* =============================
+ * Reports Section & Theme Toggle
+ * =============================
+ *
+ * The following classes and IDs are tightly integrated with the reports page rendering (main.js) and the HTML structure (index.html):
+ *
+ *   .reports-center-outer      - Main flex container for vertical centering and spacing of the reports section.
+ *   .reports-center-wrapper    - Inner flex column for centering and stacking content.
+ *   .reports-downloads         - Card-style container for download/upload forms and actions.
+ *
+ * These ensure a responsive, visually consistent layout for the reports page, and are referenced directly in both the HTML and JavaScript.
+ *
+ *   #theme-toggle              - The dark mode toggle button, styled for both light and dark themes, with clear hover/focus/active states.
+ *                                This is toggled via main.js and present in the header (index.html).
+ *
+ * All selectors and class names are kept consistent across HTML, JS, and CSS for seamless, maintainable UI/UX.
+ */
+
 .reports-center-outer {
     width: 100%;
     min-height: 80vh;
@@ -1572,138 +1589,6 @@ html[data-theme="dark"] .budget-list-entry {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-}
-.reports-downloads {
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-    align-items: stretch;
-    background: var(--bg-tertiary);
-    padding: 2rem 2.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    margin-top: 2rem;
-    max-width: 650px;
-    width: 100%;
-}
-
-/* Download Range Form (Reports) */
-.download-range-form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.7rem 1.2rem;
-    width: 100%;
-}
-.download-range-form label {
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-right: 0.2rem;
-}
-.download-range-form input[type="date"] {
-    padding: 0.4rem 0.7rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-size: 1rem;
-    outline: none;
-    transition: border 0.2s;
-}
-.download-range-form input[type="date"]:focus {
-    border-color: var(--primary-color);
-}
-.download-range-form button,
-#download-all-btn {
-    min-width: 260px;
-    width: 100%;
-    font-size: 1rem;
-    padding: 0.7rem 1.2rem;
-    margin-left: 0;
-}
-
-/* Upload Form (Reports) */
-.upload-form {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 1.2rem;
-}
-.upload-form label.btn-success {
-    cursor: pointer;
-    margin-bottom: 0;
-}
-#upload-filename {
-    font-size: 0.98rem;
-    font-style: italic;
-    color: var(--text-secondary);
-    max-width: 220px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Chart Placeholder (Trends) */
-.chart-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 180px;
-    padding: 2.5rem 1.5rem 2rem 1.5rem;
-    background: var(--bg-tertiary);
-    border-radius: 18px;
-    box-shadow: var(--shadow);
-    margin-top: 1.2rem;
-    color: var(--text-secondary);
-    text-align: center;
-    transition: background 0.2s;
-}
-.chart-placeholder .placeholder-illustration {
-    margin-bottom: 1.2rem;
-    opacity: 0.95;
-}
-.chart-placeholder .placeholder-content h4 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
-}
-.chart-placeholder .placeholder-content p {
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
-    color: var(--text-secondary);
-}
-.chart-placeholder .placeholder-tip {
-    font-size: 0.98rem;
-    color: var(--info-color);
-    background: rgba(6,182,212,0.08);
-    border-radius: 8px;
-    padding: 0.5rem 1rem;
-    margin-top: 0.5rem;
-    display: inline-block;
-}
-.chart-placeholder svg {
-    max-width: 80px;
-    max-height: 80px;
-    display: block;
-}
-
-/* Centering Reports Section */
-.reports-center-outer {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    min-height: 80vh;
-}
-.reports-center-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
 }
 .reports-center-wrapper .reports-downloads {
     width: 100%;

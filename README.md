@@ -1,28 +1,24 @@
 # Personal Finance Dashboard
 
-A modern, privacy-first web app for managing your personal finances. Track income, expenses, budgets, bills, goals, and more—all in your browser, with no server or signup required.
+A modern, privacy-first web app to manage your finances—track income, expenses, budgets, bills, goals, and more. Everything runs locally in your browser. No accounts, no tracking, no server required.
 
 ---
 
 ## 🚀 Features
-- **Dashboard**: Summary cards, analytics, and quick stats for your financial health
+- **Dashboard**: At-a-glance summary cards, analytics, and quick stats
 - **Transactions**: Add, edit, delete, duplicate; custom categories, tags, notes, file attachments; recurring transactions; advanced filtering/search
 - **Budgets**: Set, track, and get alerts for custom budgets; CSV import/export
-- **Bills**: Add, edit, delete, mark as paid; recurring bills; empty state UI with quick add
-- **Goals**: Set, track, and mark financial goals; empty state UI with quick add
+- **Bills**: Add, edit, delete, mark as paid; recurring bills; quick add from empty state
+- **Goals**: Set, track, and mark financial goals; quick add from empty state
 - **Reports**: Download/import transactions, budgets, bills, and goals as CSV; export all data as JSON
-- **Trends**: Visualize spending, cash flow, and net worth over time with interactive charts and engaging empty states
-- **Calendar**: View daily expenses and upcoming bills/goals
+- **Trends**: Visualize spending, cash flow, and net worth over time with interactive charts
+- **Calendar**: See daily expenses, upcoming bills, and goals
 - **Category Manager**: Add, edit, and organize custom categories
-- **Dark/Light Mode**: Theme and accent color customization
+- **Dark/Light Mode**: Instantly switch themes and accent colors
 - **Notifications**: Alerts for actions, reminders, and errors
 - **Attachment Gallery**: View all uploaded files in one place
 - **Audit Log**: Track add/edit/delete actions (basic)
-- **Multi-currency support**: (planned)
-- **Advanced investment analytics**: (planned)
-- **AI-powered insights**: (planned)
-- **Shared budgets/accounts**: (planned)
-- **Calendar/notification integrations**: (planned)
+- **Planned**: Multi-currency, advanced investment analytics, AI-powered insights, shared budgets/accounts, calendar/notification integrations
 
 ---
 
@@ -35,9 +31,10 @@ A modern, privacy-first web app for managing your personal finances. Track incom
 
 ## 📁 Project Structure
 - `index.html` — Main UI, navigation, dashboard, modals, and all app sections
-- `frontend/css/style.css` — All styles, themes, and responsive layout
-- `frontend/js/main.js` — App logic, CRUD, navigation, rendering, chart logic, empty state handling, modal logic
+- `style.css` — All styles, themes, and responsive layout
+- `main.js` — App logic, CRUD, navigation, rendering, chart logic, empty state handling, modal logic
 - `storage.js` — LocalStorage helpers for persistent data
+- `utils.js` — Utility/helper functions for formatting, chart helpers, etc.
 - `README.md` — Project documentation
 - `LICENSE` — MIT License
 
@@ -70,7 +67,7 @@ To use these features, add your assets, liabilities, and investments as transact
 
 ---
 
-## 🗺️ Roadmap Ideas
+## 🗺️ Roadmap
 - Multi-currency support
 - Advanced investment analytics
 - AI-powered insights and suggestions

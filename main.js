@@ -1,23 +1,8 @@
 // --- BEGIN STATIC WEBSITE CODE ---
 // Utility functions and classes
-/**
- * Utility functions for formatting dates, currency, and generating IDs.
- */
-const utils = {
-    /** Format a date as a locale string. */
-    formatDate(date) {
-        const d = new Date(date);
-        return d.toLocaleDateString();
-    },
-    /** Format a number as currency. */
-    formatCurrency(amount) {
-        return '$' + parseFloat(amount).toFixed(2);
-    },
-    /** Generate a unique ID. */
-    generateId() {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2);
-    }
-};
+// (Moved all utility functions to utils.js)
+
+// --- END UTILS ---
 
 /**
  * Notification service for showing success/error messages.
@@ -201,6 +186,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- BEGIN ENHANCEMENTS FOR FULL FUNCTIONALITY ---
 
+// Utility/chart helper functions moved to utils.js
+
 const DEFAULT_CATEGORIES = [
     'Salary', 'Business', 'Investment', 'Gift', 'Food', 'Transport', 'Shopping', 'Utilities', 'Health', 'Entertainment', 'Other'
 ];
@@ -220,42 +207,49 @@ function renderRecentTransactions() {
         container.innerHTML = '<div class="empty-state"><p>No recent transactions.</p></div>';
         return;
     }
-    // Bulk delete controls
+    // Render bulk delete controls and transaction items
     container.innerHTML = `
-        <div style="margin-bottom:10px;">
-            <button id="bulk-delete-btn" class="btn btn-danger btn-sm" style="display:none;"><i class="fas fa-trash"></i> Delete Selected</button>
+        <div class="recent-tx-controls" style="margin-bottom:10px;">
+            <button id="bulk-delete-btn" class="btn btn-danger btn-sm" style="display:none;">
+                <i class="fas fa-trash"></i> Delete Selected
+            </button>
         </div>
-    ` + txs.map(tx => `
-        <div class="transaction-item">
-            <input type="checkbox" class="tx-bulk-checkbox" data-id="${tx.id}" style="margin-right:8px;">
-            <div class="transaction-icon ${tx.type}"><i class="fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}"></i></div>
-            <div class="transaction-details">
-                <div class="transaction-description">${tx.description}</div>
-                <div class="transaction-category">${tx.category}</div>
-                ${tx.notes ? `<div class='transaction-notes'><i class='fas fa-sticky-note'></i> ${tx.notes}</div>` : ''}
-                ${tx.attachment ? `<div class='transaction-attachment'><i class='fas fa-paperclip'></i> <a href='${tx.attachment.dataUrl}' target='_blank' download='${tx.attachment.name}'>${tx.attachment.name}</a></div>` : ''}
-            </div>
-            <div class="transaction-meta">
-                <div class="transaction-date">${utils.formatDate(tx.date)}</div>
-                <div class="transaction-amount ${tx.type}">${utils.formatCurrency(tx.amount)}</div>
-            </div>
+        <div class="transaction-list">
+            ${txs.map(tx => `
+                <div class="transaction-item">
+                    <input type="checkbox" class="tx-bulk-checkbox" data-id="${tx.id}" style="margin-right:8px;">
+                    <div class="transaction-icon ${tx.type}"><i class="fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}"></i></div>
+                    <div class="transaction-details">
+                        <div class="transaction-description">${tx.description}</div>
+                        <div class="transaction-category">${tx.category}</div>
+                        ${tx.notes ? `<div class='transaction-notes'><i class='fas fa-sticky-note'></i> ${tx.notes}</div>` : ''}
+                        ${tx.attachment ? `<div class='transaction-attachment'><i class='fas fa-paperclip'></i> <a href='${tx.attachment.dataUrl}' target='_blank' download='${tx.attachment.name}'>${tx.attachment.name}</a></div>` : ''}
+                    </div>
+                    <div class="transaction-meta">
+                        <div class="transaction-date">${utils.formatDate(tx.date)}</div>
+                        <div class="transaction-amount ${tx.type}">${utils.formatCurrency(tx.amount)}</div>
+                    </div>
+                </div>
+            `).join('')}
         </div>
-    `).join('');
+    `;
     // Bulk delete logic
     setTimeout(() => {
         const checkboxes = container.querySelectorAll('.tx-bulk-checkbox');
         const bulkBtn = document.getElementById('bulk-delete-btn');
+        // Show/hide bulk delete button based on selection
         checkboxes.forEach(cb => cb.addEventListener('change', () => {
             const anyChecked = Array.from(checkboxes).some(c => c.checked);
             bulkBtn.style.display = anyChecked ? 'inline-block' : 'none';
         }));
+        // Bulk delete selected transactions
         bulkBtn.addEventListener('click', () => {
             const ids = Array.from(checkboxes).filter(c => c.checked).map(c => c.getAttribute('data-id'));
             if (ids.length && confirm('Delete selected transactions?')) {
                 ids.forEach(id => window.transactionManager.delete(id));
                 updateDashboardSummary();
                 renderRecentTransactions();
-                renderTransactionsPage && renderTransactionsPage();
+                if (typeof renderTransactionsPage === 'function') renderTransactionsPage();
             }
         });
     }, 0);
@@ -318,22 +312,10 @@ function handleTransactionForm() {
     };
 }
 
-function getChartFontColor() {
-    return getComputedStyle(document.body).getPropertyValue('--text-primary') || '#1e293b';
-}
-function getChartFontSize() {
-    return parseFloat(getComputedStyle(document.body).getPropertyValue('--chart-font-size')) || 16;
-}
-function getBarLabelColor(ctx) {
-    // Use white for dark bars, dark for light bars
-    const bg = ctx.dataset.backgroundColor[ctx.dataIndex] || ctx.dataset.backgroundColor;
-    // Simple luminance check for RGB(A)
-    let rgb = bg.match(/\d+/g);
-    if (!rgb) return '#222';
-    let [r, g, b] = rgb;
-    let luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-    return luminance < 140 ? '#fff' : '#222';
-}
+// Remove local chart helpers (now in utils.js)
+// function getChartFontColor() { ... }
+// function getChartFontSize() { ... }
+// function getBarLabelColor(ctx) { ... }
 
 function renderIncomeExpenseChart() {
     const ctx = document.getElementById('income-expense-chart');
@@ -342,47 +324,28 @@ function renderIncomeExpenseChart() {
     let income = 0, expenses = 0;
     txs.forEach(tx => {
         if (tx.type === 'income') income += parseFloat(tx.amount);
-        else if (tx.type === 'expense') expenses += parseFloat(tx.amount);
+        else expenses += parseFloat(tx.amount);
     });
     if (window.incomeExpenseChart) window.incomeExpenseChart.destroy();
     window.incomeExpenseChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'doughnut',
         data: {
             labels: ['Income', 'Expenses'],
             datasets: [{
                 data: [income, expenses],
-                backgroundColor: [
-                    'rgba(16, 185, 129, 0.9)', // green
-                    'rgba(239, 68, 68, 0.9)'   // red
-                ],
-                borderRadius: 6,
-                maxBarThickness: 60
+                backgroundColor: ['rgba(16,185,129,0.9)', 'rgba(239,68,68,0.9)'],
             }]
         },
         options: {
             plugins: {
-                legend: { display: false },
-                datalabels: { display: false }
-            },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { color: getChartFontColor(), font: { size: 20 } }
-                },
-                y: {
-                    grid: { color: 'rgba(100,116,139,0.12)' },
-                    ticks: {
-                        color: getChartFontColor(),
-                        font: { size: 20 },
-                        beginAtZero: true,
-                        callback: function(value) {
-                            return '$' + Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                        }
+                legend: {
+                    labels: {
+                        color: utils.getChartFontColor(),
+                        font: { size: utils.getChartFontSize() }
                     }
                 }
             }
-        },
-        plugins: []
+        }
     });
 }
 
@@ -398,40 +361,24 @@ function renderCategoryChart() {
     const amounts = Object.values(data);
     if (window.categoryChart) window.categoryChart.destroy();
     window.categoryChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'pie',
         data: {
             labels: categories,
             datasets: [{
                 data: amounts,
                 backgroundColor: categories.map((_, i) => i % 2 === 0 ? 'rgba(16,185,129,0.9)' : 'rgba(239,68,68,0.9)'),
-                borderRadius: 6,
-                maxBarThickness: 60
             }]
         },
         options: {
             plugins: {
-                legend: { display: false },
-                datalabels: { display: false }
-            },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { color: getChartFontColor(), font: { size: 20 } }
-                },
-                y: {
-                    grid: { color: 'rgba(100,116,139,0.12)' },
-                    ticks: {
-                        color: getChartFontColor(),
-                        font: { size: 20 },
-                        beginAtZero: true,
-                        callback: function(value) {
-                            return '$' + Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                        }
+                legend: {
+                    labels: {
+                        color: utils.getChartFontColor(),
+                        font: { size: utils.getChartFontSize() }
                     }
                 }
             }
-        },
-        plugins: []
+        }
     });
 }
 
@@ -479,8 +426,8 @@ function renderCashFlowChart() {
                 datalabels: { display: false }
             },
             scales: {
-                x: { grid: { display: false }, ticks: { color: getChartFontColor() } },
-                y: { grid: { color: 'rgba(100,116,139,0.12)' }, ticks: { color: getChartFontColor(), beginAtZero: true } }
+                x: { grid: { display: false }, ticks: { color: utils.getChartFontColor() } },
+                y: { grid: { color: 'rgba(100,116,139,0.12)' }, ticks: { color: utils.getChartFontColor(), beginAtZero: true } }
             }
         }
     });
@@ -522,8 +469,8 @@ function renderNetWorthChart() {
                 datalabels: { display: false }
             },
             scales: {
-                x: { grid: { display: false }, ticks: { color: getChartFontColor() } },
-                y: { grid: { color: 'rgba(100,116,139,0.12)' }, ticks: { color: getChartFontColor(), beginAtZero: true } }
+                x: { grid: { display: false }, ticks: { color: utils.getChartFontColor() } },
+                y: { grid: { color: 'rgba(100,116,139,0.12)' }, ticks: { color: utils.getChartFontColor(), beginAtZero: true } }
             }
         }
     });
