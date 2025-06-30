@@ -58,96 +58,7 @@ class FinanceApp {
         return this.state.transactions;
     }
 
-    // --- Utility Functions ---
-    getTransactionsByCategory(category) {
-        return this.state.transactions.filter(tx => tx.category === category);
-    }
-
-    getTransactionsByDateRange(start, end) {
-        return this.state.transactions.filter(tx => tx.date >= start && tx.date <= end);
-    }
-
-    getTotalByType(type) {
-        return this.state.transactions
-            .filter(tx => tx.type === type)
-            .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
-    }
-
-    getAttachmentStats() {
-        let count = 0, totalSize = 0;
-        this.state.transactions.forEach(tx => {
-            if (tx.attachment && tx.attachment.dataUrl) {
-                count++;
-                // Estimate size from base64 string
-                const size = Math.ceil((tx.attachment.dataUrl.length - (tx.attachment.dataUrl.indexOf(',') + 1)) * 3 / 4);
-                totalSize += size;
-            }
-        });
-        return { count, totalSize };
-    }
-
-    searchTransactions(keyword) {
-        const lower = keyword.toLowerCase();
-        return this.state.transactions.filter(tx =>
-            (tx.description && tx.description.toLowerCase().includes(lower)) ||
-            (tx.notes && tx.notes.toLowerCase().includes(lower))
-        );
-    }
-
-    // --- More Utility & Analytics Functions ---
-    getTopCategories(n = 3) {
-        const counts = {};
-        this.state.transactions.forEach(tx => {
-            if (!counts[tx.category]) counts[tx.category] = 0;
-            counts[tx.category] += parseFloat(tx.amount);
-        });
-        return Object.entries(counts)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, n)
-            .map(([cat, amt]) => ({ category: cat, total: amt }));
-    }
-
-    getBiggestExpense() {
-        return this.state.transactions
-            .filter(tx => tx.type === 'expense')
-            .reduce((max, tx) => (!max || parseFloat(tx.amount) > parseFloat(max.amount)) ? tx : max, null);
-    }
-
-    getMostFrequentTransaction() {
-        const freq = {};
-        this.state.transactions.forEach(tx => {
-            const key = tx.description + '|' + tx.amount + '|' + tx.category;
-            freq[key] = (freq[key] || 0) + 1;
-        });
-        let maxKey = null, maxCount = 0;
-        for (const key in freq) {
-            if (freq[key] > maxCount) {
-                maxCount = freq[key];
-                maxKey = key;
-            }
-        }
-        if (!maxKey) return null;
-        const [description, amount, category] = maxKey.split('|');
-        return { description, amount, category, count: maxCount };
-    }
-
-    getMonthlyTotals() {
-        const monthly = {};
-        this.state.transactions.forEach(tx => {
-            const ym = tx.date.slice(0, 7);
-            if (!monthly[ym]) monthly[ym] = 0;
-            monthly[ym] += parseFloat(tx.amount) * (tx.type === 'income' ? 1 : -1);
-        });
-        return monthly;
-    }
-
-    // --- Transaction Duplicate Feature ---
-    duplicateTransaction(id) {
-        const tx = this.state.transactions.find(t => t.id === id);
-        if (!tx) return;
-        const newTx = { ...tx, id: utils.generateId(), date: new Date().toISOString().slice(0, 10) };
-        this.addTransaction(newTx);
-    }
+    // Similar methods for budgets, bills, goals can be added here
 }
 
 class DashboardPage {
@@ -206,14 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             const pageDiv = document.getElementById(page + '-page');
             if (pageDiv) pageDiv.classList.add('active');
-            // Render the page content if needed
-            if (page === 'transactions') renderTransactionsPage();
-            if (page === 'budgets') renderBudgetsPage();
-            if (page === 'bills') renderBillsPage();
-            if (page === 'goals') renderGoalsPage();
         });
     });
-    
+
     // Add Transaction button
     document.getElementById('add-transaction-btn')?.addEventListener('click', () => {
         document.getElementById('transaction-modal').style.display = 'flex';
@@ -264,9 +170,8 @@ const DEFAULT_CATEGORIES = [
 function populateCategoryDropdown() {
     const select = document.getElementById('transaction-category');
     if (!select) return;
-    const cats = getCategories();
     select.innerHTML = '<option value="">Select category</option>' +
-        cats.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        DEFAULT_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('');
 }
 
 function renderRecentTransactions() {
@@ -283,18 +188,17 @@ function renderRecentTransactions() {
             <div class="transaction-details">
                 <div class="transaction-description">${tx.description}</div>
                 <div class="transaction-category">${tx.category}</div>
-                ${tx.tags && tx.tags.length ? `<div class='transaction-tags'>${tx.tags.map(tag => `<span class='tag'>${tag}</span>`).join(' ')}</div>` : ''}
+                ${tx.notes ? `<div class='transaction-notes'><i class='fas fa-sticky-note'></i> ${tx.notes}</div>` : ''}
+                ${tx.attachment ? `<div class='transaction-attachment'><i class='fas fa-paperclip'></i> <a href='${tx.attachment.dataUrl}' target='_blank' download='${tx.attachment.name}'>${tx.attachment.name}</a></div>` : ''}
             </div>
             <div class="transaction-meta">
                 <div class="transaction-date">${utils.formatDate(tx.date)}</div>
                 <div class="transaction-amount ${tx.type}">${utils.formatCurrency(tx.amount)}</div>
-                <button class="btn btn-fav" title="Favorite" onclick="toggleFavoriteTransaction('${tx.id}')">
-                    <i class="fas fa-star${tx.favorite ? '' : '-o'}" style="color:${tx.favorite ? '#fbbf24' : '#aaa'}"></i>
-                </button>
             </div>
         </div>
     `).join('');
 }
+
 function updateDashboardSummary() {
     const txs = window.app.getTransactions();
     let income = 0, expenses = 0;
@@ -317,22 +221,13 @@ function updateDashboardSummary() {
 function handleTransactionForm() {
     const form = document.getElementById('transaction-form');
     if (!form) return;
-    // Recurring UI logic
-    const recurringCheckbox = document.getElementById('transaction-recurring');
-    const recurringOptions = document.getElementById('recurring-options');
-    if (recurringCheckbox && recurringOptions) {
-        recurringCheckbox.onchange = function() {
-            recurringOptions.style.display = this.checked ? 'inline-block' : 'none';
-        };
-    }
-    form.onsubmit = function(e) {
+    form.onsubmit = async function(e) {
         e.preventDefault();
         const type = form['type'].value;
-        const amount = parseFloat(form['amount'].value);
+        const amount = form['amount'].value;
         const description = form['description'].value;
         const category = form['category'].value;
         const date = form['date'].value;
-        const tags = form['tags'] && form['tags'].value ? form['tags'].value.split(',').map(t => t.trim()).filter(Boolean) : [];
         const notes = form['notes'] ? form['notes'].value : '';
         let attachment = null;
         if (form['attachment'] && form['attachment'].files && form['attachment'].files[0]) {
@@ -341,59 +236,23 @@ function handleTransactionForm() {
                 NotificationService.showError('Attachment too large (max 1MB).');
                 return;
             }
-            attachment = {
-                name: file.name,
-                type: file.type,
-                dataUrl: '' // Will be filled by FileReader below
-            };
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                attachment.dataUrl = e.target.result;
-                submitTx();
-            };
-            reader.readAsDataURL(file);
-            return;
+            attachment = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve({
+                    name: file.name,
+                    type: file.type,
+                    dataUrl: e.target.result
+                });
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
         }
-        submitTx();
-        function submitTx() {
-            const isRecurring = recurringCheckbox && recurringCheckbox.checked;
-            if (!type || !amount || !description || !category || !date) return;
-            // --- Budget Alert Logic ---
-            if (type === 'expense') {
-                const budgets = window.app.state.budgets || [];
-                const budget = budgets.find(b => b.category === category);
-                if (budget) {
-                    const txs = window.app.getTransactions().filter(tx => tx.type === 'expense' && tx.category === category && tx.date.slice(0,7) === date.slice(0,7));
-                    const spent = txs.reduce((sum, tx) => sum + parseFloat(tx.amount), 0) + amount;
-                    if (spent > parseFloat(budget.amount)) {
-                        NotificationService.showError('Warning: This will exceed your budget for ' + category + '!');
-                    } else if (spent > 0.9 * parseFloat(budget.amount)) {
-                        NotificationService.showError('Caution: You are close to your budget for ' + category + '.');
-                    }
-                }
-            }
-            // --- End Budget Alert Logic ---
-            if (isRecurring) {
-                const freq = form['recurring-frequency'].value;
-                const count = parseInt(form['recurring-count'].value) || 1;
-                let d = new Date(date);
-                for (let i = 0; i < count; ++i) {
-                    window.transactionManager.add({
-                        type, amount, description: description + ' (Recurring)', category, date: d.toISOString().slice(0, 10), tags, notes, attachment
-                    });
-                    if (freq === 'monthly') d.setMonth(d.getMonth() + 1);
-                    else if (freq === 'weekly') d.setDate(d.getDate() + 7);
-                    else if (freq === 'yearly') d.setFullYear(d.getFullYear() + 1);
-                }
-            } else {
-                window.transactionManager.add({ type, amount, description, category, date, tags, notes, attachment });
-            }
-            document.getElementById('transaction-modal').style.display = 'none';
-            form.reset();
-            if (recurringOptions) recurringOptions.style.display = 'none';
-            updateDashboardSummary();
-            renderRecentTransactions();
-        }
+        if (!type || !amount || !description || !category || !date) return;
+        window.transactionManager.add({ type, amount, description, category, date, notes, attachment });
+        document.getElementById('transaction-modal').style.display = 'none';
+        form.reset();
+        updateDashboardSummary();
+        renderRecentTransactions();
     };
 }
 
@@ -514,6 +373,108 @@ function renderCategoryChart() {
     });
 }
 
+function renderCashFlowChart() {
+    const ctx = document.getElementById('cash-flow-chart');
+    if (!ctx) return;
+    const txs = window.app.getTransactions();
+    const monthly = {};
+    txs.forEach(tx => {
+        const ym = tx.date.slice(0, 7);
+        if (!monthly[ym]) monthly[ym] = { income: 0, expense: 0 };
+        if (tx.type === 'income') monthly[ym].income += parseFloat(tx.amount);
+        if (tx.type === 'expense') monthly[ym].expense += parseFloat(tx.amount);
+    });
+    const months = Object.keys(monthly).sort();
+    const incomeData = months.map(m => monthly[m].income);
+    const expenseData = months.map(m => monthly[m].expense);
+    if (window.cashFlowChart) window.cashFlowChart.destroy();
+    window.cashFlowChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [
+                {
+                    label: 'Income',
+                    data: incomeData,
+                    borderColor: 'rgba(16,185,129,1)',
+                    backgroundColor: 'rgba(16,185,129,0.1)',
+                    fill: false,
+                    tension: 0.2
+                },
+                {
+                    label: 'Expenses',
+                    data: expenseData,
+                    borderColor: 'rgba(239,68,68,1)',
+                    backgroundColor: 'rgba(239,68,68,0.1)',
+                    fill: false,
+                    tension: 0.2
+                }
+            ]
+        },
+        options: {
+            plugins: {
+                legend: { display: true },
+                datalabels: { display: false }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: getChartFontColor() } },
+                y: { grid: { color: 'rgba(100,116,139,0.12)' }, ticks: { color: getChartFontColor(), beginAtZero: true } }
+            }
+        }
+    });
+}
+
+function renderNetWorthChart() {
+    const ctx = document.getElementById('net-worth-chart');
+    if (!ctx) return;
+    const txs = window.app.getTransactions();
+    const monthly = {};
+    let runningNet = 0;
+    txs
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .forEach(tx => {
+            const ym = tx.date.slice(0, 7);
+            if (!monthly[ym]) monthly[ym] = 0;
+            runningNet += (tx.type === 'income' ? 1 : -1) * parseFloat(tx.amount);
+            monthly[ym] = runningNet;
+        });
+    const months = Object.keys(monthly).sort();
+    const netWorthData = months.map(m => monthly[m]);
+    if (window.netWorthChart) window.netWorthChart.destroy();
+    window.netWorthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Net Worth',
+                data: netWorthData,
+                borderColor: 'rgba(59,130,246,1)',
+                backgroundColor: 'rgba(59,130,246,0.1)',
+                fill: true,
+                tension: 0.2
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { display: true },
+                datalabels: { display: false }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: getChartFontColor() } },
+                y: { grid: { color: 'rgba(100,116,139,0.12)' }, ticks: { color: getChartFontColor(), beginAtZero: true } }
+            }
+        }
+    });
+}
+
+// Patch trends page rendering to call this
+const origRenderTrendsPage = typeof renderTrendsPage === 'function' ? renderTrendsPage : null;
+renderTrendsPage = function() {
+    if (origRenderTrendsPage) origRenderTrendsPage();
+    renderCashFlowChart();
+    renderNetWorthChart();
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     populateCategoryDropdown();
     renderRecentTransactions();
@@ -536,127 +497,25 @@ function renderTransactionsPage() {
         return;
     }
     page.innerHTML = `
-        <h2>All Transactions <button class='btn btn-secondary' id='show-favorites-btn'><i class='fas fa-star'></i> Favorites</button></h2>
+        <h2>All Transactions</h2>
         <div class="transaction-list">
-            ${txs.map(tx => {
-                const isGoal = tx.description && tx.description.toLowerCase().includes('goal');
-                return `
-                <div class="transaction-item" data-id="${tx.id}">
+            ${txs.map(tx => `
+                <div class="transaction-item">
                     <div class="transaction-icon ${tx.type}"><i class="fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}"></i></div>
                     <div class="transaction-details">
                         <div class="transaction-description">${tx.description}</div>
                         <div class="transaction-category">${tx.category}</div>
-                        ${tx.tags && tx.tags.length ? `<div class='transaction-tags'>${tx.tags.map(tag => `<span class='tag'>${tag}</span>`).join(' ')}</div>` : ''}
+                        ${tx.notes ? `<div class='transaction-notes'><i class='fas fa-sticky-note'></i> ${tx.notes}</div>` : ''}
+                        ${tx.attachment ? `<div class='transaction-attachment'><i class='fas fa-paperclip'></i> <a href='${tx.attachment.dataUrl}' target='_blank' download='${tx.attachment.name}'>${tx.attachment.name}</a></div>` : ''}
                     </div>
                     <div class="transaction-meta">
                         <div class="transaction-date">${utils.formatDate(tx.date)}</div>
                         <div class="transaction-amount ${tx.type}">${utils.formatCurrency(tx.amount)}</div>
-                        <button class="btn btn-fav" title="Favorite" onclick="toggleFavoriteTransaction('${tx.id}')">
-                            <i class="fas fa-star${tx.favorite ? '' : '-o'}" style="color:${tx.favorite ? '#fbbf24' : '#aaa'}"></i>
-                        </button>
-                    </div>
-                    <div class="transaction-actions">
-                        ${!isGoal ? `<button class="btn btn-secondary btn-edit-tx" title="Edit"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-danger btn-delete-tx" title="Delete"><i class="fas fa-trash"></i></button>` : ''}
-                        <button class="btn btn-secondary btn-duplicate-tx" title="Duplicate"><i class="fas fa-copy"></i></button>
                     </div>
                 </div>
-                `;
-            }).join('')}
+            `).join('')}
         </div>
     `;
-    // Add event listeners for edit/delete
-    page.querySelectorAll('.btn-edit-tx').forEach(btn => {
-        btn.onclick = function(e) {
-            const id = btn.closest('.transaction-item').getAttribute('data-id');
-            editTransaction(id);
-        };
-    });
-    page.querySelectorAll('.btn-delete-tx').forEach(btn => {
-        btn.onclick = function(e) {
-            const id = btn.closest('.transaction-item').getAttribute('data-id');
-            if (confirm('Delete this transaction?')) {
-                window.app.deleteTransaction(id);
-                renderTransactionsPage();
-                updateDashboardSummary && updateDashboardSummary();
-                renderRecentTransactions && renderRecentTransactions();
-            }
-        };
-    });
-    // Add duplicate button event listeners
-    document.querySelectorAll('.btn-duplicate-tx').forEach(btn => {
-        btn.onclick = function() {
-            const id = btn.closest('.transaction-item').getAttribute('data-id');
-            window.app.duplicateTransaction(id);
-            renderTransactionsPage();
-            renderRecentTransactions && renderRecentTransactions();
-        };
-    });
-    // Filter favorites
-    const favBtn = document.getElementById('show-favorites-btn');
-    if (favBtn) {
-        favBtn.onclick = function() {
-            const favs = window.app.getTransactions().filter(tx => tx.favorite);
-            if (!favs.length) return alert('No favorites yet!');
-            page.innerHTML = `<h2>Favorite Transactions</h2><div class='transaction-list'>${favs.map(tx => `
-                <div class='transaction-item'>
-                    <div class='transaction-icon ${tx.type}'><i class='fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}'></i></div>
-                    <div class='transaction-details'>
-                        <div class='transaction-description'>${tx.description}</div>
-                        <div class='transaction-category'>${tx.category}</div>
-                        ${tx.tags && tx.tags.length ? `<div class='transaction-tags'>${tx.tags.map(tag => `<span class='tag'>${tag}</span>`).join(' ')}</div>` : ''}
-                    </div>
-                    <div class='transaction-meta'>
-                        <div class='transaction-date'>${utils.formatDate(tx.date)}</div>
-                        <div class='transaction-amount ${tx.type}'>${utils.formatCurrency(tx.amount)}</div>
-                        <button class='btn btn-fav' title='Favorite' onclick='toggleFavoriteTransaction("${tx.id}")'>
-                            <i class='fas fa-star' style='color:#fbbf24'></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('')}</div><button class='btn' onclick='renderTransactionsPage()'>Back</button>`;
-        };
-    }
-}
-
-function editTransaction(id) {
-    const tx = window.app.getTransactions().find(t => t.id === id);
-    if (!tx) return;
-    // Show modal and prefill
-    document.getElementById('transaction-modal').style.display = 'flex';
-    document.getElementById('transaction-modal-title').textContent = 'Edit Transaction';
-    document.getElementById('transaction-type').value = tx.type;
-    document.getElementById('transaction-amount').value = tx.amount;
-    document.getElementById('transaction-description').value = tx.description;
-    document.getElementById('transaction-category').value = tx.category;
-    document.getElementById('transaction-date').value = tx.date;
-    document.getElementById('transaction-tags').value = (tx.tags || []).join(', ');
-    document.getElementById('transaction-notes').value = tx.notes || '';
-    window._editTxId = id;
-    // Patch form submit
-    const form = document.getElementById('transaction-form');
-    if (form) {
-        form.onsubmit = function(e) {
-            e.preventDefault();
-            const data = {
-                type: form.type.value,
-                amount: parseFloat(form.amount.value),
-                description: form.description.value,
-                category: form.category.value,
-                date: form.date.value,
-                tags: form['tags'] && form['tags'].value ? form['tags'].value.split(',').map(t => t.trim()).filter(Boolean) : [],
-                notes: form['notes'] ? form['notes'].value : ''
-            };
-            window.app.updateTransaction(window._editTxId, data);
-            document.getElementById('transaction-modal').style.display = 'none';
-            renderTransactionsPage();
-            updateDashboardSummary && updateDashboardSummary();
-            renderRecentTransactions && renderRecentTransactions();
-            window._editTxId = null;
-            // Restore default form handler
-            handleTransactionForm && handleTransactionForm();
-        };
-    }
 }
 
 function renderBudgetsPage() {
@@ -1295,199 +1154,86 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- BEGIN REPORTS PAGE FUNCTIONALITY ---
 function renderReportsPage() {
-    // Date range form
-    const rangeForm = document.getElementById('download-range-form');
-    const allBtn = document.getElementById('download-all-btn');
-    if (rangeForm) {
-        rangeForm.onsubmit = function(e) {
-            e.preventDefault();
-            const start = document.getElementById('download-start-date').value;
-            const end = document.getElementById('download-end-date').value;
-            if (!start || !end) return NotificationService.showError('Please select both dates.');
-            const txs = window.app.getTransactions().filter(tx => {
-                return tx.date >= start && tx.date <= end;
-            });
-            if (!txs.length) return NotificationService.showError('No transactions in selected range.');
-            const csv = transactionsToCSV(txs);
-            downloadCSV(csv, `transactions_${start}_to_${end}.csv`);
-        };
-    }
-    if (allBtn) {
-        allBtn.onclick = function() {
+    // Attach download handlers
+    const txBtn = document.getElementById('download-transactions-btn');
+    const accBtn = document.getElementById('download-account-btn');
+    if (txBtn) {
+        txBtn.onclick = function() {
             const txs = window.app.getTransactions();
             if (!txs.length) return NotificationService.showError('No transactions to export.');
             const csv = transactionsToCSV(txs);
-            downloadCSV(csv, 'transactions_all.csv');
+            downloadCSV(csv, 'transactions.csv');
         };
     }
-    // Upload logic
-    const uploadInput = document.getElementById('upload-file');
-    const uploadForm = document.getElementById('upload-form');
-    const uploadFilename = document.getElementById('upload-filename');
-    if (uploadInput && uploadForm) {
-        uploadInput.onchange = function() {
-            if (uploadInput.files.length) {
-                uploadFilename.textContent = uploadInput.files[0].name;
-                handleFileUpload(uploadInput.files[0]);
-            } else {
-                uploadFilename.textContent = '';
-            }
+    if (accBtn) {
+        accBtn.onclick = function() {
+            const txs = window.app.getTransactions();
+            if (!txs.length) return NotificationService.showError('No account history to export.');
+            const csv = accountHistoryToCSV(txs);
+            downloadCSV(csv, 'account_history.csv');
         };
-        uploadForm.onsubmit = function(e) { e.preventDefault(); };
     }
 }
 
-function handleFileUpload(file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const text = e.target.result;
-        let imported = false;
-        if (file.name.endsWith('.csv')) {
-            imported = importTransactionsFromCSV(text);
-        } else if (file.name.endsWith('.txt')) {
-            imported = importTransactionsFromText(text);
-        }
-        if (imported) {
-            NotificationService.showSuccess('Data imported! Refreshing...');
-            setTimeout(() => window.location.reload(), 800);
-        } else {
-            NotificationService.showError('Could not import data. Check file format.');
-        }
-    };
-    reader.readAsText(file);
+function transactionsToCSV(txs) {
+    const header = ['ID','Type','Amount','Description','Category','Date'];
+    const rows = txs.map(tx => [
+        tx.id,
+        tx.type,
+        tx.amount,
+        '"' + (tx.description || '').replace(/"/g, '""') + '"',
+        tx.category,
+        tx.date
+    ]);
+    return [header, ...rows].map(r => r.join(',')).join('\r\n');
 }
 
-function importTransactionsFromCSV(text) {
-    // Accepts: ID,Type,Amount,Description,Category,Date (header row optional)
-    const lines = text.trim().split(/\r?\n/);
-    let start = 0;
-    if (/id|type|amount|description|category|date/i.test(lines[0])) start = 1;
-    const txs = Storage.getTransactions();
-    let imported = 0;
-    for (let i = start; i < lines.length; ++i) {
-        const row = lines[i].split(',');
-        if (row.length < 6) continue;
-        const [id, type, amount, description, category, date] = row;
-        if (!type || !amount || !date) continue;
-        txs.push({
-            id: id || utils.generateId(),
-            type: type.trim(),
-            amount: parseFloat(amount),
-            description: description.replace(/^"|"$/g, ''),
-            category: category.trim(),
-            date: date.trim()
-        });
-        imported++;
-    }
-    if (imported) Storage.saveTransactions(txs);
-    return imported > 0;
+function accountHistoryToCSV(txs) {
+    // Account history: running balance after each transaction
+    let balance = 0;
+    const header = ['ID','Type','Amount','Description','Category','Date','Balance After'];
+    const rows = txs.map(tx => {
+        if (tx.type === 'income') balance += parseFloat(tx.amount);
+        else if (tx.type === 'expense') balance -= parseFloat(tx.amount);
+        return [
+            tx.id,
+            tx.type,
+            tx.amount,
+            '"' + (tx.description || '').replace(/"/g, '""') + '"',
+            tx.category,
+            tx.date,
+            balance.toFixed(2)
+        ];
+    });
+    return [header, ...rows].map(r => r.join(',')).join('\r\n');
 }
 
-function importTransactionsFromText(text) {
-    // Accepts lines like: type,amount,description,category,date
-    const lines = text.trim().split(/\r?\n/);
-    const txs = Storage.getTransactions();
-    let imported = 0;
-    for (let line of lines) {
-        const row = line.split(',');
-        if (row.length < 5) continue;
-        const [type, amount, description, category, date] = row;
-        if (!type || !amount || !date) continue;
-        txs.push({
-            id: utils.generateId(),
-            type: type.trim(),
-            amount: parseFloat(amount),
-            description: description.replace(/^"|"$/g, ''),
-            category: category.trim(),
-            date: date.trim()
-        });
-        imported++;
-    }
-    if (imported) Storage.saveTransactions(txs);
-    return imported > 0;
+function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 0);
 }
+
+// Patch navigation to render reports page
+const reportsMenuItem = document.querySelector('.menu-item[data-page="reports"]');
+if (reportsMenuItem) {
+    reportsMenuItem.addEventListener('click', renderReportsPage);
+}
+// If user lands on reports page directly (refresh)
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('reports-page')?.classList.contains('active')) {
+        renderReportsPage();
+    }
+});
 // --- END REPORTS PAGE FUNCTIONALITY ---
-
-// --- BEGIN EXPORT/IMPORT FOR BUDGETS, BILLS, GOALS ---
-function setupReportsDataImportExport() {
-    // Budgets
-    document.getElementById('download-budgets-btn')?.addEventListener('click', () => {
-        const arr = Storage.getBudgets();
-        if (!arr.length) return NotificationService.showError('No budgets to export.');
-        const csv = [['Category','Amount','Period'].join(',')].concat(arr.map(b => [b.category,b.amount,b.period].join(','))).join('\r\n');
-        downloadCSV(csv, 'budgets.csv');
-    });
-    document.getElementById('upload-budgets')?.addEventListener('change', function() {
-        if (!this.files.length) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const lines = e.target.result.trim().split(/\r?\n/);
-            let start = 0;
-            if (/category|amount|period/i.test(lines[0])) start = 1;
-            const arr = [];
-            for (let i = start; i < lines.length; ++i) {
-                const [category, amount, period] = lines[i].split(',');
-                if (category && amount && period) arr.push({category, amount, period});
-            }
-            if (arr.length) Storage.saveBudgets(arr);
-            NotificationService.showSuccess('Budgets imported!');
-            setTimeout(()=>window.location.reload(), 800);
-        };
-        reader.readAsText(this.files[0]);
-    });
-    // Bills
-    document.getElementById('download-bills-btn')?.addEventListener('click', () => {
-        const arr = Storage.getBills();
-        if (!arr.length) return NotificationService.showError('No bills to export.');
-        const csv = [['Name','Amount','DueDate','Status'].join(',')].concat(arr.map(b => [b.name,b.amount,b.dueDate,b.status].join(','))).join('\r\n');
-        downloadCSV(csv, 'bills.csv');
-    });
-    document.getElementById('upload-bills')?.addEventListener('change', function() {
-        if (!this.files.length) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const lines = e.target.result.trim().split(/\r?\n/);
-            let start = 0;
-            if (/name|amount|due/i.test(lines[0])) start = 1;
-            const arr = [];
-            for (let i = start; i < lines.length; ++i) {
-                const [name, amount, dueDate, status] = lines[i].split(',');
-                if (name && amount && dueDate) arr.push({name, amount, dueDate, status: status||'pending'});
-            }
-            if (arr.length) Storage.saveBills(arr);
-            NotificationService.showSuccess('Bills imported!');
-            setTimeout(()=>window.location.reload(), 800);
-        };
-        reader.readAsText(this.files[0]);
-    });
-    // Goals
-    document.getElementById('download-goals-btn')?.addEventListener('click', () => {
-        const arr = Storage.getGoals();
-        if (!arr.length) return NotificationService.showError('No goals to export.');
-        const csv = [['Name','Amount','Date','Desc','Saved','Status'].join(',')].concat(arr.map(g => [g.name,g.amount,g.date,g.desc||'',g.saved||0,g.status||''].join(','))).join('\r\n');
-        downloadCSV(csv, 'goals.csv');
-    });
-    document.getElementById('upload-goals')?.addEventListener('change', function() {
-        if (!this.files.length) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const lines = e.target.result.trim().split(/\r?\n/);
-            let start = 0;
-            if (/name|amount|date/i.test(lines[0])) start = 1;
-            const arr = [];
-            for (let i = start; i < lines.length; ++i) {
-                const [name, amount, date, desc, saved, status] = lines[i].split(',');
-                if (name && amount && date) arr.push({name, amount, date, desc, saved: parseFloat(saved)||0, status: status||''});
-            }
-            if (arr.length) Storage.saveGoals(arr);
-            NotificationService.showSuccess('Goals imported!');
-            setTimeout(()=>window.location.reload(), 800);
-        };
-        reader.readAsText(this.files[0]);
-    });
-}
-document.addEventListener('DOMContentLoaded', setupReportsDataImportExport);
-// --- END EXPORT/IMPORT FOR BUDGETS, BILLS, GOALS ---
 
 // --- BEGIN DARK MODE TOGGLE FUNCTIONALITY ---
     // Theme toggle (dark mode)
@@ -1500,191 +1246,25 @@ document.addEventListener('DOMContentLoaded', setupReportsDataImportExport);
             localStorage.setItem('theme', theme);
             // Optionally update icon
             const icon = themeToggle.querySelector('i');
-            if (icon) {
-                icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            if (theme === 'dark') {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            } else {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
             }
         }
-        const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        setTheme(currentTheme);
-        // Toggle on click
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            setTheme(savedTheme);
+        } else {
+            // Detect system preference
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            setTheme(prefersDark ? 'dark' : 'light');
+        }
         themeToggle.addEventListener('click', () => {
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            setTheme(newTheme);
+            const currentTheme = root.getAttribute('data-theme');
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
         });
     }
 // --- END DARK MODE TOGGLE FUNCTIONALITY ---
-// --- FAVORITE/STARRED TRANSACTIONS ---
-// Add a favorite property to transactions and UI controls
-function toggleFavoriteTransaction(id) {
-    const txs = window.app.getTransactions();
-    const idx = txs.findIndex(t => t.id === id);
-    if (idx !== -1) {
-        txs[idx].favorite = !txs[idx].favorite;
-        Storage.saveTransactions(txs);
-        renderTransactionsPage && renderTransactionsPage();
-        renderRecentTransactions && renderRecentTransactions();
-    }
-}
-window.toggleFavoriteTransaction = toggleFavoriteTransaction;
-
-// Patch renderRecentTransactions to show star icon
-const origRenderRecentTransactions = renderRecentTransactions;
-renderRecentTransactions = function() {
-    const txs = window.app.getTransactions().slice(-5).reverse();
-    const container = document.getElementById('recent-transactions');
-    if (!container) return;
-    if (txs.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>No recent transactions.</p></div>';
-        return;
-    }
-    container.innerHTML = txs.map(tx => `
-        <div class="transaction-item">
-            <div class="transaction-icon ${tx.type}"><i class="fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}"></i></div>
-            <div class="transaction-details">
-                <div class="transaction-description">${tx.description}</div>
-                <div class="transaction-category">${tx.category}</div>
-                ${tx.tags && tx.tags.length ? `<div class='transaction-tags'>${tx.tags.map(tag => `<span class='tag'>${tag}</span>`).join(' ')}</div>` : ''}
-            </div>
-            <div class="transaction-meta">
-                <div class="transaction-date">${utils.formatDate(tx.date)}</div>
-                <div class="transaction-amount ${tx.type}">${utils.formatCurrency(tx.amount)}</div>
-                <button class="btn btn-fav" title="Favorite" onclick="toggleFavoriteTransaction('${tx.id}')">
-                    <i class="fas fa-star${tx.favorite ? '' : '-o'}" style="color:${tx.favorite ? '#fbbf24' : '#aaa'}"></i>
-                </button>
-            </div>
-        </div>
-    `).join('');
-};
-
-// Patch renderTransactionsPage to show star icon and filter
-const origRenderTransactionsPage = renderTransactionsPage;
-renderTransactionsPage = function() {
-    const page = document.getElementById('transactions-page');
-    if (!page) return;
-    const txs = window.app.getTransactions();
-    if (txs.length === 0) {
-        page.innerHTML = '<div class="empty-state"><p>No transactions found.</p></div>';
-        return;
-    }
-    page.innerHTML = `
-        <h2>All Transactions <button class='btn btn-secondary' id='show-favorites-btn'><i class='fas fa-star'></i> Favorites</button></h2>
-        <div class="transaction-list">
-            ${txs.map(tx => {
-                const isGoal = tx.description && tx.description.toLowerCase().includes('goal');
-                return `
-                <div class="transaction-item" data-id="${tx.id}">
-                    <div class="transaction-icon ${tx.type}"><i class="fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}"></i></div>
-                    <div class="transaction-details">
-                        <div class="transaction-description">${tx.description}</div>
-                        <div class="transaction-category">${tx.category}</div>
-                        ${tx.tags && tx.tags.length ? `<div class='transaction-tags'>${tx.tags.map(tag => `<span class='tag'>${tag}</span>`).join(' ')}</div>` : ''}
-                    </div>
-                    <div class="transaction-meta">
-                        <div class="transaction-date">${utils.formatDate(tx.date)}</div>
-                        <div class="transaction-amount ${tx.type}">${utils.formatCurrency(tx.amount)}</div>
-                        <button class="btn btn-fav" title="Favorite" onclick="toggleFavoriteTransaction('${tx.id}')">
-                            <i class="fas fa-star${tx.favorite ? '' : '-o'}" style="color:${tx.favorite ? '#fbbf24' : '#aaa'}"></i>
-                        </button>
-                    </div>
-                    <div class="transaction-actions">
-                        ${!isGoal ? `<button class="btn btn-secondary btn-edit-tx" title="Edit"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-danger btn-delete-tx" title="Delete"><i class="fas fa-trash"></i></button>` : ''}
-                        <button class="btn btn-secondary btn-duplicate-tx" title="Duplicate"><i class="fas fa-copy"></i></button>
-                    </div>
-                </div>
-                `;
-            }).join('')}
-        </div>
-    `;
-    // Add event listeners for edit/delete
-    page.querySelectorAll('.btn-edit-tx').forEach(btn => {
-        btn.onclick = function(e) {
-            const id = btn.closest('.transaction-item').getAttribute('data-id');
-            editTransaction(id);
-        };
-    });
-    page.querySelectorAll('.btn-delete-tx').forEach(btn => {
-        btn.onclick = function(e) {
-            const id = btn.closest('.transaction-item').getAttribute('data-id');
-            if (confirm('Delete this transaction?')) {
-                window.app.deleteTransaction(id);
-                renderTransactionsPage();
-                updateDashboardSummary && updateDashboardSummary();
-                renderRecentTransactions && renderRecentTransactions();
-            }
-        };
-    });
-    // Add duplicate button event listeners
-    document.querySelectorAll('.btn-duplicate-tx').forEach(btn => {
-        btn.onclick = function() {
-            const id = btn.closest('.transaction-item').getAttribute('data-id');
-            window.app.duplicateTransaction(id);
-            renderTransactionsPage();
-            renderRecentTransactions && renderRecentTransactions();
-        };
-    });
-    // Filter favorites
-    const favBtn = document.getElementById('show-favorites-btn');
-    if (favBtn) {
-        favBtn.onclick = function() {
-            const favs = window.app.getTransactions().filter(tx => tx.favorite);
-            if (!favs.length) return alert('No favorites yet!');
-            page.innerHTML = `<h2>Favorite Transactions</h2><div class='transaction-list'>${favs.map(tx => `
-                <div class='transaction-item'>
-                    <div class='transaction-icon ${tx.type}'><i class='fas fa-${tx.type === 'income' ? 'arrow-up' : 'arrow-down'}'></i></div>
-                    <div class='transaction-details'>
-                        <div class='transaction-description'>${tx.description}</div>
-                        <div class='transaction-category'>${tx.category}</div>
-                        ${tx.tags && tx.tags.length ? `<div class='transaction-tags'>${tx.tags.map(tag => `<span class='tag'>${tag}</span>`).join(' ')}</div>` : ''}
-                    </div>
-                    <div class='transaction-meta'>
-                        <div class='transaction-date'>${utils.formatDate(tx.date)}</div>
-                        <div class='transaction-amount ${tx.type}'>${utils.formatCurrency(tx.amount)}</div>
-                        <button class='btn btn-fav' title='Favorite' onclick='toggleFavoriteTransaction("${tx.id}")'>
-                            <i class='fas fa-star' style='color:#fbbf24'></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('')}</div><button class='btn' onclick='renderTransactionsPage()'>Back</button>`;
-        };
-    }
-};
-// --- END SUBTAB RENDERING ---
-
-// --- DASHBOARD ANALYTICS PANEL ---
-function renderDashboardAnalytics() {
-    const panel = document.getElementById('dashboard-analytics-panel');
-    if (!panel) return;
-    const topCats = window.app.getTopCategories();
-    const biggest = window.app.getBiggestExpense();
-    const frequent = window.app.getMostFrequentTransaction();
-    panel.innerHTML = `
-        <h3>Quick Analytics</h3>
-        <div><b>Top Categories:</b> ${topCats.map(c => `${c.category} ($${c.total.toFixed(2)})`).join(', ')}</div>
-        <div><b>Biggest Expense:</b> ${biggest ? `${biggest.description} ($${parseFloat(biggest.amount).toFixed(2)})` : 'N/A'}</div>
-        <div><b>Most Frequent:</b> ${frequent ? `${frequent.description} (${frequent.count}×)` : 'N/A'}</div>
-    `;
-}
-document.addEventListener('DOMContentLoaded', () => {
-    // Add analytics panel to dashboard
-    const dash = document.getElementById('dashboard-page');
-    if (dash && !document.getElementById('dashboard-analytics-panel')) {
-        const panel = document.createElement('div');
-        panel.id = 'dashboard-analytics-panel';
-        panel.className = 'dashboard-analytics-panel';
-        dash.appendChild(panel);
-    }
-    renderDashboardAnalytics();
-});
-// Re-render analytics after transaction changes
-const origAddTx = window.app.addTransaction.bind(window.app);
-window.app.addTransaction = function(tx) {
-    origAddTx(tx);
-    renderDashboardAnalytics && renderDashboardAnalytics();
-};
-const origDeleteTx = window.app.deleteTransaction.bind(window.app);
-window.app.deleteTransaction = function(id) {
-    origDeleteTx(id);
-    renderDashboardAnalytics && renderDashboardAnalytics();
-};
-// --- END DASHBOARD ANALYTICS PANEL ---
