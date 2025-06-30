@@ -52,7 +52,22 @@ A comprehensive, full-stack personal finance management application built with N
 - Real-time notifications
 - Intuitive navigation
 
-## 🛠️ Technology Stack
+## � Quick Start Options
+
+### 🌐 Production Deployment (Full Features)
+**Deploy your own production-ready instance with full functionality:**
+
+The application is ready for production deployment on modern cloud platforms:
+- **Frontend**: Vercel (free tier available)
+- **Backend**: Railway (free tier available)  
+- **Database**: MongoDB Atlas (free tier available)
+
+📖 **[Complete Production Deployment Guide →](PRODUCTION-DEPLOYMENT.md)**
+
+### 💻 Local Development
+**For development and customization:**
+
+## �🛠️ Technology Stack
 
 ### Backend
 - **Node.js** - Runtime environment
@@ -73,43 +88,16 @@ A comprehensive, full-stack personal finance management application built with N
 
 ## 📋 Prerequisites
 
-Before running this application, make sure you have the following installed:
+## ⚡ Local Development Setup
+
+### Prerequisites
+Before running this application locally, make sure you have the following installed:
 
 - [Node.js](https://nodejs.org/) (v14 or higher)
 - [MongoDB](https://www.mongodb.com/) (v4.4 or higher)
 - [npm](https://www.npmjs.com/) (v6 or higher)
 
-## 🔒 Security Notice
-
-**⚠️ IMPORTANT:** This repository follows security best practices:
-- No real credentials are committed to the repository
-- All sensitive data uses environment variables
-- Examples use placeholder values only
-- See `SECURITY.md` for detailed security guidelines
-
-**Before deploying:** Always use your own secure credentials and never commit real secrets to version control.
-
-## ⚡ Quick Start
-
-### 🌐 Try the Demo (GitHub Pages)
-**Instant access - no setup required!**
-
-Visit the live demo: [Your-GitHub-Username.github.io/Personal-Finance-Dashboard](https://your-github-username.github.io/Personal-Finance-Dashboard)
-
-**Demo features:**
-- ✅ Full responsive interface
-- ✅ All UI components and navigation
-- ✅ Sample financial data
-- ✅ Interactive charts and graphs
-- ✅ Dark/light theme switching
-
-### 🏠 Run Locally (Full Features)
-
-#### Prerequisites
-- [Node.js](https://nodejs.org/) (v14 or higher)
-- [MongoDB](https://www.mongodb.com/) (v4.4 or higher)
-
-#### Installation
+### Installation
 ```bash
 # 1. Clone the repository
 git clone https://github.com/your-username/Personal-Finance-Dashboard.git
@@ -130,6 +118,16 @@ net start MongoDB
 npm start
 # Open frontend/index.html in your browser
 ```
+
+## 🔒 Security Notice
+
+**⚠️ IMPORTANT:** This repository follows security best practices:
+- No real credentials are committed to the repository
+- All sensitive data uses environment variables
+- Examples use placeholder values only
+- See `SECURITY.md` for detailed security guidelines
+
+**Before deploying:** Always use your own secure credentials and never commit real secrets to version control.
 
 ## 🔒 Security
 
