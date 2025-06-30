@@ -235,11 +235,76 @@ function handleTransactionForm() {
     };
 }
 
+function renderCategoryChart() {
+    const ctx = document.getElementById('category-chart');
+    if (!ctx) return;
+    const txs = window.app.getTransactions().filter(tx => tx.type === 'expense');
+    const data = {};
+    txs.forEach(tx => {
+        data[tx.category] = (data[tx.category] || 0) + parseFloat(tx.amount);
+    });
+    const categories = Object.keys(data);
+    const amounts = Object.values(data);
+    if (window.categoryChart) window.categoryChart.destroy();
+    window.categoryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: categories,
+            datasets: [{
+                data: amounts,
+                backgroundColor: [
+                    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#64748b', '#a78bfa', '#f472b6', '#facc15', '#34d399', '#60a5fa'
+                ],
+            }]
+        },
+        options: {
+            plugins: { legend: { labels: { color: getComputedStyle(document.body).getPropertyValue('--text-primary') } } },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+function renderIncomeExpenseChart() {
+    const ctx = document.getElementById('income-expense-chart');
+    if (!ctx) return;
+    const txs = window.app.getTransactions();
+    let income = 0, expenses = 0;
+    txs.forEach(tx => {
+        if (tx.type === 'income') income += parseFloat(tx.amount);
+        else if (tx.type === 'expense') expenses += parseFloat(tx.amount);
+    });
+    if (window.incomeExpenseChart) window.incomeExpenseChart.destroy();
+    window.incomeExpenseChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Income', 'Expenses'],
+            datasets: [{
+                label: 'Amount',
+                data: [income, expenses],
+                backgroundColor: [ '#10b981', '#ef4444' ]
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-primary') } },
+                y: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-primary') } }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     populateCategoryDropdown();
     renderRecentTransactions();
     updateDashboardSummary();
     handleTransactionForm();
+    renderCategoryChart();
+    renderIncomeExpenseChart();
+    // Optionally, re-render charts when transactions change
 });
 // --- END ENHANCEMENTS ---
 
@@ -279,27 +344,27 @@ function renderBudgetsPage() {
     const budgets = window.app.state.budgets || [];
     const txs = window.app.getTransactions();
     page.innerHTML = `
-        <h2>Budgets</h2>
-        <form id="budget-form" class="mb-3" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:end;">
-            <div class="form-group">
+        <h2 class="budgets-title">Budgets</h2>
+        <form id="budget-form" class="budget-form">
+            <div class="budget-form-group">
                 <label for="budget-category">Category</label>
                 <select id="budget-category" required>
                     <option value="">Select category</option>
                     ${DEFAULT_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
                 </select>
             </div>
-            <div class="form-group">
+            <div class="budget-form-group">
                 <label for="budget-amount">Amount</label>
                 <input type="number" id="budget-amount" min="0.01" step="0.01" required />
             </div>
-            <div class="form-group">
+            <div class="budget-form-group">
                 <label for="budget-period">Period</label>
                 <select id="budget-period" required>
                     <option value="monthly">Monthly</option>
                     <option value="yearly">Yearly</option>
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">Add Budget</button>
+            <button type="submit" class="btn btn-primary budget-add-btn">Add Budget</button>
         </form>
         <div id="budgets-list"></div>
     `;
@@ -320,32 +385,110 @@ function renderBudgetsPage() {
 function renderBudgetsList() {
     const list = document.getElementById('budgets-list');
     if (!list) return;
-    const budgets = window.app.state.budgets || [];
+    // Remove duplicate budgets (same category and period)
+    const budgetsRaw = window.app.state.budgets || [];
+    const uniqueBudgets = [];
+    const seen = new Set();
+    for (const b of budgetsRaw) {
+        const key = b.category + '|' + b.period;
+        if (!seen.has(key)) {
+            uniqueBudgets.push(b);
+            seen.add(key);
+        }
+    }
+    // If duplicates were found and removed, update storage
+    if (uniqueBudgets.length !== budgetsRaw.length) {
+        window.app.state.budgets = uniqueBudgets;
+        Storage.saveBudgets(uniqueBudgets);
+    }
     const txs = window.app.getTransactions();
-    if (budgets.length === 0) {
+    if (uniqueBudgets.length === 0) {
         list.innerHTML = '<div class="empty-state"><p>No budgets set. Add one above!</p></div>';
         return;
     }
-    list.innerHTML = `<table class="w-full"><thead><tr><th>Category</th><th>Amount</th><th>Period</th><th>Spent</th><th>Actions</th></tr></thead><tbody>
-        ${budgets.map(b => {
+    list.innerHTML = `
+    <div style="display:flex;justify-content:center;">
+      <table class="budget-table w-full" style="margin:2rem auto;min-width:700px;box-shadow:0 2px 12px #0001;border-radius:12px;overflow:hidden;background:var(--bg-primary);">
+        <thead style="background:var(--bg-tertiary);">
+          <tr>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Period</th>
+            <th>Spent</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        ${uniqueBudgets.map(b => {
             const spent = txs.filter(tx => tx.category === b.category && tx.type === 'expense')
                 .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
-            return `<tr>
+            const percent = Math.round((spent/b.amount)*100)||0;
+            const periodLabel = b.period.charAt(0).toUpperCase() + b.period.slice(1);
+            return `<tr style="text-align:center;">
                 <td>${b.category}</td>
                 <td>${utils.formatCurrency(b.amount)}</td>
-                <td>${b.period}</td>
-                <td>${utils.formatCurrency(spent)} (${Math.round((spent/b.amount)*100)||0}%)</td>
-                <td><button class="btn btn-danger btn-sm" onclick="deleteBudget('${b.id}')">Delete</button></td>
+                <td>${periodLabel}</td>
+                <td>
+                  <div style="display:flex;flex-direction:column;align-items:center;">
+                    <span>${utils.formatCurrency(spent)} <span style="color:${percent>100?'var(--danger-color)':'var(--primary-color)'};font-weight:bold;">(${percent}%)</span></span>
+                    <div class="progress-bar" style="width:100px;height:8px;background:#e2e8f0;border-radius:4px;margin-top:6px;">
+                      <div class="progress-bar-inner" style="height:8px;border-radius:4px;background:${percent>100?'var(--danger-color)':'var(--primary-color)'};width:${Math.min(percent,120)}%;transition:width .3s;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <button class="btn btn-secondary btn-sm" style="padding:0.5rem 1.2rem;font-size:1rem;border-radius:8px;margin-bottom:0.5rem;" onclick="editBudget('${b.id}')">Edit</button><br>
+                  <button class="btn btn-danger btn-sm" style="padding:0.5rem 1.2rem;font-size:1rem;border-radius:8px;" onclick="deleteBudget('${b.id}')">Delete</button>
+                </td>
             </tr>`;
         }).join('')}
-    </tbody></table>`;
+        </tbody>
+      </table>
+    </div>`;
 }
 
-window.deleteBudget = function(id) {
-    window.app.state.budgets = window.app.state.budgets.filter(b => b.id !== id);
-    Storage.saveBudgets(window.app.state.budgets);
-    renderBudgetsList();
+window.editBudget = function(id) {
+    const budget = (window.app.state.budgets || []).find(b => b.id === id);
+    if (!budget) return;
+    // Fill the form with the budget's data
+    document.getElementById('budget-category').value = budget.category;
+    document.getElementById('budget-amount').value = budget.amount;
+    document.getElementById('budget-period').value = budget.period;
+    // Set edit mode
+    window.budgetEditId = id;
+    // Change button text to 'Update Budget'
+    const addBtn = document.querySelector('.budget-add-btn');
+    if (addBtn) addBtn.textContent = 'Update Budget';
 };
+
+// Patch the form submit to handle edit mode
+document.addEventListener('DOMContentLoaded', () => {
+    // ...existing code...
+    // Patch budget form submit for edit
+    const form = document.getElementById('budget-form');
+    if (form) {
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            const category = form['budget-category'].value;
+            const amount = parseFloat(form['budget-amount'].value);
+            const period = form['budget-period'].value;
+            if (!category || !amount || !period) return;
+            if (window.budgetEditId) {
+                // Update existing budget
+                window.app.state.budgets.push({ id: window.budgetEditId, category, amount, period });
+                window.budgetEditId = null;
+                const addBtn = document.querySelector('.budget-add-btn');
+                if (addBtn) addBtn.textContent = 'Add Budget';
+            } else {
+                // Add new budget
+                window.app.state.budgets.push({ id: utils.generateId(), category, amount, period });
+            }
+            Storage.saveBudgets(window.app.state.budgets);
+            renderBudgetsList();
+            form.reset();
+        };
+    }
+});
 
 function renderBillsPage() {
     const page = document.getElementById('bills-page');
@@ -388,7 +531,27 @@ function handleTabRendering() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ...existing code...
+    // Robust Theme toggle
+    function setTheme(theme) {
+        if (theme === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            document.getElementById('theme-toggle').innerHTML = '<i class="fas fa-sun"></i>';
+        } else {
+            document.body.removeAttribute('data-theme');
+            document.getElementById('theme-toggle').innerHTML = '<i class=\"fas fa-moon\"></i>';
+        }
+    }
+    const themeToggle = document.getElementById('theme-toggle');
+    // Set theme on load
+    setTheme(localStorage.getItem('theme'));
+    if (themeToggle) {
+        themeToggle.onclick = function() {
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            setTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+        };
+    }
     handleTabRendering();
     // Render default dashboard and transactions page content
     renderTransactionsPage();
@@ -407,27 +570,27 @@ function renderBudgetsPage() {
     const budgets = window.app.state.budgets || [];
     const txs = window.app.getTransactions();
     page.innerHTML = `
-        <h2>Budgets</h2>
-        <form id="budget-form" class="mb-3" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:end;">
-            <div class="form-group">
+        <h2 class="budgets-title">Budgets</h2>
+        <form id="budget-form" class="budget-form">
+            <div class="budget-form-group">
                 <label for="budget-category">Category</label>
                 <select id="budget-category" required>
                     <option value="">Select category</option>
                     ${DEFAULT_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
                 </select>
             </div>
-            <div class="form-group">
+            <div class="budget-form-group">
                 <label for="budget-amount">Amount</label>
                 <input type="number" id="budget-amount" min="0.01" step="0.01" required />
             </div>
-            <div class="form-group">
+            <div class="budget-form-group">
                 <label for="budget-period">Period</label>
                 <select id="budget-period" required>
                     <option value="monthly">Monthly</option>
                     <option value="yearly">Yearly</option>
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">Add Budget</button>
+            <button type="submit" class="btn btn-primary budget-add-btn">Add Budget</button>
         </form>
         <div id="budgets-list"></div>
     `;
@@ -448,32 +611,110 @@ function renderBudgetsPage() {
 function renderBudgetsList() {
     const list = document.getElementById('budgets-list');
     if (!list) return;
-    const budgets = window.app.state.budgets || [];
+    // Remove duplicate budgets (same category and period)
+    const budgetsRaw = window.app.state.budgets || [];
+    const uniqueBudgets = [];
+    const seen = new Set();
+    for (const b of budgetsRaw) {
+        const key = b.category + '|' + b.period;
+        if (!seen.has(key)) {
+            uniqueBudgets.push(b);
+            seen.add(key);
+        }
+    }
+    // If duplicates were found and removed, update storage
+    if (uniqueBudgets.length !== budgetsRaw.length) {
+        window.app.state.budgets = uniqueBudgets;
+        Storage.saveBudgets(uniqueBudgets);
+    }
     const txs = window.app.getTransactions();
-    if (budgets.length === 0) {
+    if (uniqueBudgets.length === 0) {
         list.innerHTML = '<div class="empty-state"><p>No budgets set. Add one above!</p></div>';
         return;
     }
-    list.innerHTML = `<table class="w-full"><thead><tr><th>Category</th><th>Amount</th><th>Period</th><th>Spent</th><th>Actions</th></tr></thead><tbody>
-        ${budgets.map(b => {
+    list.innerHTML = `
+    <div style="display:flex;justify-content:center;">
+      <table class="budget-table w-full" style="margin:2rem auto;min-width:700px;box-shadow:0 2px 12px #0001;border-radius:12px;overflow:hidden;background:var(--bg-primary);">
+        <thead style="background:var(--bg-tertiary);">
+          <tr>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Period</th>
+            <th>Spent</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        ${uniqueBudgets.map(b => {
             const spent = txs.filter(tx => tx.category === b.category && tx.type === 'expense')
                 .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
-            return `<tr>
+            const percent = Math.round((spent/b.amount)*100)||0;
+            const periodLabel = b.period.charAt(0).toUpperCase() + b.period.slice(1);
+            return `<tr style="text-align:center;">
                 <td>${b.category}</td>
                 <td>${utils.formatCurrency(b.amount)}</td>
-                <td>${b.period}</td>
-                <td>${utils.formatCurrency(spent)} (${Math.round((spent/b.amount)*100)||0}%)</td>
-                <td><button class="btn btn-danger btn-sm" onclick="deleteBudget('${b.id}')">Delete</button></td>
+                <td>${periodLabel}</td>
+                <td>
+                  <div style="display:flex;flex-direction:column;align-items:center;">
+                    <span>${utils.formatCurrency(spent)} <span style="color:${percent>100?'var(--danger-color)':'var(--primary-color)'};font-weight:bold;">(${percent}%)</span></span>
+                    <div class="progress-bar" style="width:100px;height:8px;background:#e2e8f0;border-radius:4px;margin-top:6px;">
+                      <div class="progress-bar-inner" style="height:8px;border-radius:4px;background:${percent>100?'var(--danger-color)':'var(--primary-color)'};width:${Math.min(percent,120)}%;transition:width .3s;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <button class="btn btn-secondary btn-sm" style="padding:0.5rem 1.2rem;font-size:1rem;border-radius:8px;margin-bottom:0.5rem;" onclick="editBudget('${b.id}')">Edit</button><br>
+                  <button class="btn btn-danger btn-sm" style="padding:0.5rem 1.2rem;font-size:1rem;border-radius:8px;" onclick="deleteBudget('${b.id}')">Delete</button>
+                </td>
             </tr>`;
         }).join('')}
-    </tbody></table>`;
+        </tbody>
+      </table>
+    </div>`;
 }
 
-window.deleteBudget = function(id) {
-    window.app.state.budgets = window.app.state.budgets.filter(b => b.id !== id);
-    Storage.saveBudgets(window.app.state.budgets);
-    renderBudgetsList();
+window.editBudget = function(id) {
+    const budget = (window.app.state.budgets || []).find(b => b.id === id);
+    if (!budget) return;
+    // Fill the form with the budget's data
+    document.getElementById('budget-category').value = budget.category;
+    document.getElementById('budget-amount').value = budget.amount;
+    document.getElementById('budget-period').value = budget.period;
+    // Set edit mode
+    window.budgetEditId = id;
+    // Change button text to 'Update Budget'
+    const addBtn = document.querySelector('.budget-add-btn');
+    if (addBtn) addBtn.textContent = 'Update Budget';
 };
+
+// Patch the form submit to handle edit mode
+document.addEventListener('DOMContentLoaded', () => {
+    // ...existing code...
+    // Patch budget form submit for edit
+    const form = document.getElementById('budget-form');
+    if (form) {
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            const category = form['budget-category'].value;
+            const amount = parseFloat(form['budget-amount'].value);
+            const period = form['budget-period'].value;
+            if (!category || !amount || !period) return;
+            if (window.budgetEditId) {
+                // Update existing budget
+                window.app.state.budgets.push({ id: window.budgetEditId, category, amount, period });
+                window.budgetEditId = null;
+                const addBtn = document.querySelector('.budget-add-btn');
+                if (addBtn) addBtn.textContent = 'Add Budget';
+            } else {
+                // Add new budget
+                window.app.state.budgets.push({ id: utils.generateId(), category, amount, period });
+            }
+            Storage.saveBudgets(window.app.state.budgets);
+            renderBudgetsList();
+            form.reset();
+        };
+    }
+});
 
 function renderBillsPage() {
     const page = document.getElementById('bills-page');
@@ -516,7 +757,27 @@ function handleTabRendering() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ...existing code...
+    // Robust Theme toggle
+    function setTheme(theme) {
+        if (theme === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            document.getElementById('theme-toggle').innerHTML = '<i class="fas fa-sun"></i>';
+        } else {
+            document.body.removeAttribute('data-theme');
+            document.getElementById('theme-toggle').innerHTML = '<i class=\"fas fa-moon\"></i>';
+        }
+    }
+    const themeToggle = document.getElementById('theme-toggle');
+    // Set theme on load
+    setTheme(localStorage.getItem('theme'));
+    if (themeToggle) {
+        themeToggle.onclick = function() {
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            setTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+        };
+    }
     handleTabRendering();
     // Render default dashboard and transactions page content
     renderTransactionsPage();

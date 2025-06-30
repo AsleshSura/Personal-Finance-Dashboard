@@ -23,6 +23,8 @@
     --header-height: 80px;
     --border-radius: 8px;
     --transition: all 0.2s ease-in-out;
+    
+    --chart-font-size: 1.1rem;
 }
 
 /* Dark Theme */
@@ -34,6 +36,8 @@
     --text-secondary: #cbd5e1;
     --text-muted: #94a3b8;
     --border-color: #334155;
+    
+    --chart-font-size: 1.15rem;
 }
 
 /* Reset and Base Styles */
@@ -383,6 +387,48 @@ body {
     display: block;
 }
 
+/* --- Dashboard Grid Responsive Spread --- */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 2.5rem;
+  align-items: start;
+}
+.summary-cards {
+  grid-column: 1 / span 2;
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+.charts-section {
+  display: flex;
+  gap: 2rem;
+  grid-column: 1 / span 2;
+}
+.chart-container {
+  flex: 1 1 0;
+  min-width: 320px;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  box-shadow: var(--shadow);
+}
+.recent-section {
+  grid-column: 1 / span 2;
+  margin-top: 2.5rem;
+}
+@media (max-width: 1100px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .charts-section {
+    flex-direction: column;
+  }
+  .summary-cards {
+    flex-direction: column;
+  }
+}
+
 /* Dashboard Grid */
 .dashboard-grid {
     display: grid;
@@ -480,12 +526,14 @@ body {
 .chart-container h3 {
     margin-bottom: 1rem;
     color: var(--text-primary);
-    font-size: 1.125rem;
+    font-size: var(--chart-font-size);
     font-weight: 600;
 }
 
 .chart-container canvas {
     max-height: 300px;
+    font-size: var(--chart-font-size) !important;
+    color: var(--text-primary) !important;
 }
 
 /* Section Headers */
@@ -748,6 +796,162 @@ body {
 
 #add-transaction-btn {
     margin-right: 12px;
+}
+
+/* --- Budget Card and Table Fixes for Dark Mode --- */
+.budget-table th, .budget-table td {
+  color: var(--text-primary) !important;
+  background: transparent !important;
+}
+.budget-table th {
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding-top: 1.2rem;
+  padding-bottom: 1.2rem;
+}
+.budget-table td {
+  font-size: 1.08rem;
+  font-weight: 500;
+}
+.budget-table tr {
+  border-bottom: 1px solid var(--border-color);
+}
+.budget-table tr:last-child {
+  border-bottom: none;
+}
+
+/* Budget form fix for dark mode */
+#budgets-page form label,
+#budgets-page form select,
+#budgets-page form input,
+#budgets-page form button {
+  color: var(--text-primary) !important;
+  background: var(--bg-primary) !important;
+}
+#budgets-page form select,
+#budgets-page form input {
+  border: 2px solid var(--border-color) !important;
+}
+#budgets-page form button {
+  background: var(--primary-color) !important;
+  color: #fff !important;
+}
+
+/* --- Budget Form Dark Mode Fixes --- */
+#budgets-page form label {
+  color: var(--text-primary) !important;
+  background: transparent !important;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  box-shadow: none !important;
+}
+#budgets-page form input,
+#budgets-page form select {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 2px solid var(--border-color) !important;
+  font-size: 1.1rem;
+  font-weight: 500;
+  box-shadow: none !important;
+}
+#budgets-page form input:focus,
+#budgets-page form select:focus {
+  border-color: var(--primary-color) !important;
+  outline: none !important;
+}
+#budgets-page form button {
+  background: var(--primary-color) !important;
+  color: #fff !important;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  box-shadow: none !important;
+}
+
+/* --- Budget Form and Table Modern Styling --- */
+.budgets-title {
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+}
+.budget-form {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  background: var(--bg-primary);
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px #0001;
+  max-width: 900px;
+  margin: 0 auto 2rem auto;
+}
+.budget-form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 180px;
+}
+.budget-form-group label {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  background: transparent;
+  box-shadow: none;
+}
+.budget-form-group input,
+.budget-form-group select {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+  font-size: 1.1rem;
+  font-weight: 500;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  box-shadow: none;
+}
+.budget-form-group input:focus,
+.budget-form-group select:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+.budget-add-btn {
+  padding: 0.9rem 2.2rem;
+  font-size: 1.15rem;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-top: 1.5rem;
+}
+
+.budget-table th, .budget-table td {
+  color: var(--text-primary);
+  background: transparent;
+}
+.budget-table th {
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding-top: 1.2rem;
+  padding-bottom: 1.2rem;
+}
+.budget-table td {
+  font-size: 1.08rem;
+  font-weight: 500;
+}
+.budget-table tr {
+  border-bottom: 1px solid var(--border-color);
+}
+.budget-table tr:last-child {
+  border-bottom: none;
+}
+.budget-table .progress-bar {
+  background: #e2e8f0;
+}
+.budget-table .progress-bar-inner {
+  background: var(--primary-color);
 }
 
 /* Utility Classes */
