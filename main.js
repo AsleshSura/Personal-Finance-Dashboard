@@ -10,11 +10,37 @@
 class NotificationService {
     /** Show a success message. */
     static showSuccess(message) {
-        alert(message); // Replace with custom UI if desired
+        this.showNotification(message, 'success');
     }
     /** Show an error message. */
     static showError(message) {
-        alert('Error: ' + message);
+        this.showNotification(message, 'error');
+    }
+    /** Show a notification with the specified type. */
+    static showNotification(message, type = 'info') {
+        const container = document.getElementById('notifications');
+        if (!container) {
+            // Fallback to alert if notification container doesn't exist
+            alert((type === 'error' ? 'Error: ' : '') + message);
+            return;
+        }
+        
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}"></i>
+            ${message}
+            <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+        `;
+        
+        container.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
     }
 }
 
@@ -57,18 +83,81 @@ class FinanceApp {
         return this.state.transactions;
     }
 
-    // Similar methods for budgets, bills, goals can be added here
+    // Budget methods
+    addBudget(budget) {
+        budget.id = utils.generateId();
+        this.state.budgets.push(budget);
+        Storage.saveBudgets(this.state.budgets);
+        NotificationService.showSuccess('Budget added!');
+    }
+    updateBudget(id, data) {
+        const idx = this.state.budgets.findIndex(b => b.id === id);
+        if (idx !== -1) {
+            this.state.budgets[idx] = { ...this.state.budgets[idx], ...data };
+            Storage.saveBudgets(this.state.budgets);
+            NotificationService.showSuccess('Budget updated!');
+        }
+    }
+    deleteBudget(id) {
+        this.state.budgets = this.state.budgets.filter(b => b.id !== id);
+        Storage.saveBudgets(this.state.budgets);
+        NotificationService.showSuccess('Budget deleted!');
+    }
+
+    // Bill methods
+    addBill(bill) {
+        bill.id = utils.generateId();
+        this.state.bills.push(bill);
+        Storage.saveBills(this.state.bills);
+        NotificationService.showSuccess('Bill added!');
+    }
+    updateBill(id, data) {
+        const idx = this.state.bills.findIndex(b => b.id === id);
+        if (idx !== -1) {
+            this.state.bills[idx] = { ...this.state.bills[idx], ...data };
+            Storage.saveBills(this.state.bills);
+            NotificationService.showSuccess('Bill updated!');
+        }
+    }
+    deleteBill(id) {
+        this.state.bills = this.state.bills.filter(b => b.id !== id);
+        Storage.saveBills(this.state.bills);
+        NotificationService.showSuccess('Bill deleted!');
+    }
+
+    // Goal methods
+    addGoal(goal) {
+        goal.id = utils.generateId();
+        this.state.goals.push(goal);
+        Storage.saveGoals(this.state.goals);
+        NotificationService.showSuccess('Goal added!');
+    }
+    updateGoal(id, data) {
+        const idx = this.state.goals.findIndex(g => g.id === id);
+        if (idx !== -1) {
+            this.state.goals[idx] = { ...this.state.goals[idx], ...data };
+            Storage.saveGoals(this.state.goals);
+            NotificationService.showSuccess('Goal updated!');
+        }
+    }
+    deleteGoal(id) {
+        this.state.goals = this.state.goals.filter(g => g.id !== id);
+        Storage.saveGoals(this.state.goals);
+        NotificationService.showSuccess('Goal deleted!');
+    }
 }
 
 class DashboardPage {
     constructor() {
-        this.render();
+        // Don't render immediately, wait for app to be initialized
     }
     render() {
         // Example: render transaction count
-        const txCount = window.app.getTransactions().length;
-        const el = document.getElementById('dashboard-tx-count');
-        if (el) el.textContent = txCount;
+        if (window.app) {
+            const txCount = window.app.getTransactions().length;
+            const el = document.getElementById('dashboard-tx-count');
+            if (el) el.textContent = txCount;
+        }
     }
 }
 
@@ -99,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.transactionManager = new TransactionManager();
     window.utils = utils;
     window.CONFIG = {};
+    
     // Hide loading overlay if present
     document.getElementById('loading-screen')?.style.setProperty('display', 'none');
     // Show main app container
@@ -122,16 +212,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // Add Transaction button
     document.getElementById('add-transaction-btn')?.addEventListener('click', () => {
-        document.getElementById('transaction-modal').style.display = 'flex';
+        document.getElementById('transaction-modal').classList.add('show');
     });
     // Modal close/cancel
     document.getElementById('cancel-transaction')?.addEventListener('click', () => {
-        document.getElementById('transaction-modal').style.display = 'none';
+        document.getElementById('transaction-modal').classList.remove('show');
     });
     // Clicking outside modal closes it
     document.getElementById('transaction-modal')?.addEventListener('click', (e) => {
         if (e.target === document.getElementById('transaction-modal')) {
-            document.getElementById('transaction-modal').style.display = 'none';
+            document.getElementById('transaction-modal').classList.remove('show');
         }
     });
     // View All (Recent Transactions)
@@ -144,8 +234,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // Initial render
     populateCategoryDropdown();
+    initializeTransactionForm();
     renderRecentTransactions();
     updateDashboardSummary();
+    window.dashboardPage.render(); // Render dashboard page after app initialization
     handleTransactionForm();
     renderCategoryChart();
     renderIncomeExpenseChart();
@@ -164,19 +256,18 @@ document.addEventListener('DOMContentLoaded', () => {
             themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
             themeToggle.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
         }
+        
+        // On load, respect saved theme
+        const saved = localStorage.getItem('theme');
+        if (saved) document.documentElement.setAttribute('data-theme', saved);
         updateThemeIcon();
+        
         themeToggle.onclick = function() {
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
             localStorage.setItem('theme', isDark ? 'light' : 'dark');
             updateThemeIcon();
         };
-        // On load, respect saved theme
-        document.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem('theme');
-            if (saved) document.documentElement.setAttribute('data-theme', saved);
-            updateThemeIcon();
-        });
     }
 });
 // --- END STATIC WEBSITE CODE ---
@@ -260,15 +351,25 @@ function updateDashboardSummary() {
         else if (tx.type === 'expense') expenses += parseFloat(tx.amount);
     });
     const balance = income - expenses;
-    document.getElementById('total-balance').textContent = utils.formatCurrency(balance);
-    document.getElementById('monthly-income').textContent = utils.formatCurrency(income);
-    document.getElementById('monthly-expenses').textContent = utils.formatCurrency(expenses);
-    // Simple change indicators (could be improved)
-    document.getElementById('balance-change').textContent = (balance >= 0 ? '+' : '-') + utils.formatCurrency(Math.abs(balance));
-    document.getElementById('income-change').textContent = '+0%';
-    document.getElementById('expenses-change').textContent = '+0%';
-    document.getElementById('upcoming-bills').textContent = window.app.state.bills.length;
-    document.getElementById('bills-amount').textContent = utils.formatCurrency(window.app.state.bills.reduce((sum, b) => sum + parseFloat(b.amount || 0), 0));
+    
+    // Safely update elements with null checks
+    const totalBalanceEl = document.getElementById('total-balance');
+    const monthlyIncomeEl = document.getElementById('monthly-income');
+    const monthlyExpensesEl = document.getElementById('monthly-expenses');
+    const balanceChangeEl = document.getElementById('balance-change');
+    const incomeChangeEl = document.getElementById('income-change');
+    const expensesChangeEl = document.getElementById('expenses-change');
+    const upcomingBillsEl = document.getElementById('upcoming-bills');
+    const billsAmountEl = document.getElementById('bills-amount');
+    
+    if (totalBalanceEl) totalBalanceEl.textContent = utils.formatCurrency(balance);
+    if (monthlyIncomeEl) monthlyIncomeEl.textContent = utils.formatCurrency(income);
+    if (monthlyExpensesEl) monthlyExpensesEl.textContent = utils.formatCurrency(expenses);
+    if (balanceChangeEl) balanceChangeEl.textContent = (balance >= 0 ? '+' : '-') + utils.formatCurrency(Math.abs(balance));
+    if (incomeChangeEl) incomeChangeEl.textContent = '+0%';
+    if (expensesChangeEl) expensesChangeEl.textContent = '+0%';
+    if (upcomingBillsEl) upcomingBillsEl.textContent = window.app.state.bills.length;
+    if (billsAmountEl) billsAmountEl.textContent = utils.formatCurrency(window.app.state.bills.reduce((sum, b) => sum + parseFloat(b.amount || 0), 0));
 }
 
 function handleTransactionForm() {
@@ -289,24 +390,38 @@ function handleTransactionForm() {
                 NotificationService.showError('Attachment too large (max 1MB).');
                 return;
             }
-            attachment = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = e => resolve({
-                    name: file.name,
-                    type: file.type,
-                    dataUrl: e.target.result
+            try {
+                attachment = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve({
+                        name: file.name,
+                        type: file.type,
+                        dataUrl: e.target.result
+                    });
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
                 });
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
+            } catch (error) {
+                NotificationService.showError('Failed to process attachment. Please try again.');
+                return;
+            }
         }
         if (!type || !amount || !description || !category || !date) return;
         window.transactionManager.add({ type, amount, description, category, date, notes, attachment });
-        document.getElementById('transaction-modal').style.display = 'none';
+        document.getElementById('transaction-modal').classList.remove('show');
         form.reset();
         updateDashboardSummary();
         renderRecentTransactions();
     };
+}
+
+function initializeTransactionForm() {
+    // Set today's date as default
+    const dateInput = document.getElementById('transaction-date');
+    if (dateInput && !dateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
 }
 
 // Remove local chart helpers (now in utils.js)
@@ -474,12 +589,34 @@ function renderNetWorthChart() {
 }
 
 // Patch trends page rendering to call this
-const origRenderTrendsPage = typeof renderTrendsPage === 'function' ? renderTrendsPage : null;
-renderTrendsPage = function() {
-    if (origRenderTrendsPage) origRenderTrendsPage();
-    renderCashFlowChart();
-    renderNetWorthChart();
-};
+function renderTrendsPage() {
+    const trendsContainer = document.getElementById('trends-page');
+    if (!trendsContainer) return;
+    
+    trendsContainer.innerHTML = `
+        <div class="charts-section">
+            <div class="chart-container">
+                <h3>Cash Flow Trends</h3>
+                <canvas id="cash-flow-chart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Net Worth Over Time</h3>
+                <canvas id="net-worth-chart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Spending Trends</h3>
+                <canvas id="trends-chart"></canvas>
+            </div>
+        </div>
+    `;
+    
+    // Render the charts
+    setTimeout(() => {
+        renderCashFlowChart();
+        renderNetWorthChart();
+        showChartPlaceholders();
+    }, 100);
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     populateCategoryDropdown();
@@ -533,12 +670,6 @@ function showChartPlaceholders() {
     }
 }
 // Call after rendering charts and on page load
-renderTrendsPage = (function(orig) {
-    return function() {
-        if (typeof orig === 'function') orig();
-        showChartPlaceholders();
-    };
-})(typeof renderTrendsPage === 'function' ? renderTrendsPage : null);
 document.addEventListener('DOMContentLoaded', showChartPlaceholders);
 
 // --- END ENHANCEMENTS ---
@@ -578,18 +709,47 @@ function renderTransactionsPage() {
 function renderBudgetsPage() {
     const page = document.getElementById('budgets-page');
     if (!page) return;
-    const budgets = Storage.getBudgets();
+    const budgets = window.app.state.budgets;
     page.innerHTML = `
         <div class="budgets-card">
             <div class="budgets-header-row">
                 <h2 class="budgets-title">Budgets</h2>
             </div>
+            <form id="budget-form" class="budget-form">
+                <div class="budget-form-group">
+                    <label for="budget-category">Category</label>
+                    <select id="budget-category" name="category" required>
+                        <option value="">Select category</option>
+                        ${DEFAULT_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="budget-form-group">
+                    <label for="budget-amount">Budget Amount</label>
+                    <input type="number" id="budget-amount" name="amount" step="0.01" min="0.01" required />
+                </div>
+                <div class="budget-form-group">
+                    <label for="budget-period">Period</label>
+                    <select id="budget-period" name="period" required>
+                        <option value="monthly">Monthly</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                <button type="submit" class="budget-add-btn">Add Budget</button>
+            </form>
             <div class="budgets-chart-container">
                 <canvas id="budgets-pie-chart" width="380" height="380"></canvas>
             </div>
             <div id="budgets-list"></div>
         </div>
     `;
+    
+    // Set up form event listener
+    const budgetForm = document.getElementById('budget-form');
+    if (budgetForm) {
+        budgetForm.addEventListener('submit', handleBudgetFormSubmit);
+    }
+    
     renderBudgetsList();
     renderBudgetsPieChart(budgets);
 }
@@ -700,11 +860,10 @@ window.editBudget = function(id) {
 
 // Ensure deleteBudget is globally available
 window.deleteBudget = function(id) {
-    const budgets = window.app.state.budgets || [];
-    const newBudgets = budgets.filter(b => b.id !== id);
-    window.app.state.budgets = newBudgets;
-    Storage.saveBudgets(newBudgets);
-    renderBudgetsList();
+    if (confirm('Delete this budget?')) {
+        window.app.deleteBudget(id);
+        renderBudgetsList();
+    }
 };
 
 // Prevent duplicate budgets on add
@@ -719,28 +878,15 @@ function handleBudgetFormSubmit(e) {
         NotificationService.showError('A budget for this category already exists.');
         return;
     }
-    const newBudget = {
-        id: utils.generateId(),
-        category,
-        amount,
-        period
-    };
-    budgets.push(newBudget);
-    window.app.state.budgets = budgets;
-    Storage.saveBudgets(budgets);
+    window.app.addBudget({ category, amount, period });
     renderBudgetsList();
     e.target.reset();
-}
-// Patch the form submit event
-let budgetForm = document.getElementById('budget-form');
-if (budgetForm) {
-    budgetForm.onsubmit = handleBudgetFormSubmit;
 }
 
 function renderBillsPage() {
     const page = document.getElementById('bills-page');
     if (!page) return;
-    let bills = Storage.getBills();
+    let bills = window.app.state.bills;
     if (!bills.length) {
         page.innerHTML = `
             <div class="empty-state">
@@ -804,9 +950,7 @@ function renderBillsPage() {
         const amount = parseFloat(document.getElementById('bill-amount').value);
         const date = document.getElementById('bill-date').value;
         if (!name || isNaN(amount) || !date) return;
-        let bills = Storage.getBills();
-        bills.push({ id: utils.generateId(), name, amount, date, status: 'upcoming' });
-        Storage.saveBills(bills);
+        window.app.addBill({ name, amount, date, status: 'upcoming' });
         renderBillsList();
         document.getElementById('bill-modal').classList.remove('show');
         e.target.reset();
@@ -816,7 +960,7 @@ function renderBillsPage() {
 function renderBillsList() {
     const container = document.getElementById('bills-list');
     if (!container) return;
-    const bills = Storage.getBills();
+    const bills = window.app.state.bills;
     if (!bills.length) {
         container.innerHTML = '<div class="bills-empty">No bills yet. Add one to get started!</div>';
         return;
@@ -863,30 +1007,26 @@ function renderBillsList() {
 }
 
 window.toggleBillStatus = function(id) {
-    const bills = Storage.getBills();
-    const idx = bills.findIndex(b => b.id === id);
-    if (idx !== -1) {
-        if (bills[idx].status === 'done') {
-            bills[idx].status = 'upcoming';
-        } else {
-            bills[idx].status = 'done';
-        }
-        Storage.saveBills(bills);
+    const bills = window.app.state.bills;
+    const bill = bills.find(b => b.id === id);
+    if (bill) {
+        const newStatus = bill.status === 'done' ? 'upcoming' : 'done';
+        window.app.updateBill(id, { status: newStatus });
         renderBillsList();
     }
 };
 
 window.deleteBill = function(id) {
-    const bills = Storage.getBills();
-    const newBills = bills.filter(b => b.id !== id);
-    Storage.saveBills(newBills);
-    renderBillsList();
+    if (confirm('Delete this bill?')) {
+        window.app.deleteBill(id);
+        renderBillsList();
+    }
 };
 
 function renderGoalsPage() {
     const page = document.getElementById('goals-page');
     if (!page) return;
-    const goals = Storage.getGoals();
+    const goals = window.app.state.goals;
     if (!goals.length) {
         page.innerHTML = `
             <div class="empty-state">
@@ -958,16 +1098,15 @@ function renderGoalsPage() {
         const date = document.getElementById('goal-date').value;
         const desc = document.getElementById('goal-desc').value.trim();
         if (!name || isNaN(amount) || !date) return;
-        let goals = Storage.getGoals();
+        
         if (window.goalEditId) {
             // Edit
-            goals = goals.map(g => g.id === window.goalEditId ? { ...g, name, amount, date, desc } : g);
+            window.app.updateGoal(window.goalEditId, { name, amount, date, desc });
             window.goalEditId = null;
         } else {
             // Add
-            goals.push({ id: utils.generateId(), name, amount, date, desc, saved: 0, status: 'active' });
+            window.app.addGoal({ name, amount, date, desc, saved: 0, status: 'active' });
         }
-        Storage.saveGoals(goals);
         renderGoalsList();
         document.getElementById('goal-modal').classList.remove('show');
         e.target.reset();
@@ -977,7 +1116,7 @@ function renderGoalsPage() {
 function renderGoalsList() {
     const container = document.getElementById('goals-list');
     if (!container) return;
-    const goals = Storage.getGoals();
+    const goals = window.app.state.goals;
     if (!goals.length) {
         container.innerHTML = '<div class="bills-empty">No goals yet. Add one to get started!</div>';
         return;
@@ -1034,7 +1173,7 @@ function renderGoalsList() {
 }
 
 window.editGoal = function(id) {
-    const goals = Storage.getGoals();
+    const goals = window.app.state.goals;
     const goal = goals.find(g => g.id === id);
     if (!goal) return;
     document.getElementById('goal-modal').classList.add('show');
@@ -1047,7 +1186,9 @@ window.editGoal = function(id) {
 };
 
 window.deleteGoal = function(id) {
-    let goals = Storage.getGoals();
+    if (!confirm('Delete this goal?')) return;
+    
+    let goals = window.app.state.goals;
     let goal = goals.find(g => g.id === id);
     if (goal && goal.saved && goal.saved > 0) {
         // Add transaction for returning money to account
@@ -1058,19 +1199,10 @@ window.deleteGoal = function(id) {
             date: new Date().toISOString().slice(0, 10),
             description: `Goal deleted: ${goal.name}`
         };
-        let txs = (window.app && typeof window.app.getTransactions === 'function') ? window.app.getTransactions() : Storage.getTransactions();
-        if (window.app && typeof window.app.addTransaction === 'function') {
-            window.app.addTransaction(returnTx);
-        } else {
-            returnTx.id = utils.generateId();
-            txs.push(returnTx);
-            Storage.saveTransactions(txs);
-        }
+        window.app.addTransaction(returnTx);
     }
-    goals = goals.filter(g => g.id !== id);
-    Storage.saveGoals(goals);
+    window.app.deleteGoal(id);
     renderGoalsList();
-    NotificationService.showSuccess('Goal Deleted');
 };
 
 window.addToGoal = function(id) {
@@ -1088,7 +1220,7 @@ window.addToGoal = function(id) {
         NotificationService.showError('Insufficient funds in your account to add this amount to your goal.');
         return;
     }
-    let goals = Storage.getGoals();
+    let goals = window.app.state.goals;
     let goal = goals.find(g => g.id === id);
     if (!goal) return;
     // Add transaction for savings withdrawal
@@ -1181,9 +1313,7 @@ function showGoalModal() {
         const date = document.getElementById('goal-date').value;
         const desc = document.getElementById('goal-desc').value.trim();
         if (!name || isNaN(amount) || !date) return;
-        let goals = Storage.getGoals();
-        goals.push({ id: utils.generateId(), name, amount, date, desc, saved: 0, status: 'active' });
-        Storage.saveGoals(goals);
+        window.app.addGoal({ name, amount, date, desc, saved: 0, status: 'active' });
         modal.classList.remove('show');
         renderGoalsPage();
     };
@@ -1193,6 +1323,63 @@ function showGoalModal() {
     modal.onclick = (e) => {
         if (e.target === modal) modal.classList.remove('show');
     };
+}
+
+// Function to show bill modal
+function showBillModal() {
+    // If modal doesn't exist, create it
+    let modal = document.getElementById('bill-modal');
+    if (!modal) {
+        // Create modal in the body
+        document.body.insertAdjacentHTML('beforeend', `
+            <div id="bill-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header"><h2>Add Bill</h2></div>
+                    <form id="bill-form" class="modal-body">
+                        <div class="form-group">
+                            <label for="bill-name">Name</label>
+                            <input type="text" id="bill-name" name="name" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="bill-amount">Amount</label>
+                            <input type="number" id="bill-amount" name="amount" step="0.01" min="0.01" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="bill-date">Due Date</label>
+                            <input type="date" id="bill-date" name="date" required />
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="cancel-bill">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Bill</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `);
+        
+        // Set up event handlers
+        modal = document.getElementById('bill-modal');
+        document.getElementById('cancel-bill').onclick = () => {
+            modal.classList.remove('show');
+        };
+        modal.onclick = (e) => {
+            if (e.target === e.currentTarget) {
+                e.currentTarget.classList.remove('show');
+            }
+        };
+        document.getElementById('bill-form').onsubmit = function(e) {
+            e.preventDefault();
+            const name = document.getElementById('bill-name').value.trim();
+            const amount = parseFloat(document.getElementById('bill-amount').value);
+            const date = document.getElementById('bill-date').value;
+            if (!name || isNaN(amount) || !date) return;
+            window.app.addBill({ name, amount, date, status: 'upcoming' });
+            renderBillsList();
+            modal.classList.remove('show');
+            e.target.reset();
+        };
+    }
+    modal.classList.add('show');
 }
 
 // --- Recurring Options Rendering ---
@@ -1401,22 +1588,78 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- BEGIN REPORTS PAGE FUNCTIONALITY ---
 function renderReportsPage() {
     // Attach download handlers
-    const txBtn = document.getElementById('download-transactions-btn');
-    const accBtn = document.getElementById('download-account-btn');
-    if (txBtn) {
-        txBtn.onclick = function() {
+    const rangeForm = document.getElementById('download-range-form');
+    const allBtn = document.getElementById('download-all-btn');
+    const budgetsBtn = document.getElementById('download-budgets-btn');
+    const uploadForm = document.getElementById('upload-form');
+    
+    if (rangeForm) {
+        rangeForm.onsubmit = function(e) {
+            e.preventDefault();
+            const startDate = document.getElementById('download-start-date').value;
+            const endDate = document.getElementById('download-end-date').value;
+            
+            if (!startDate || !endDate) {
+                NotificationService.showError('Please select both start and end dates.');
+                return;
+            }
+            
             const txs = window.app.getTransactions();
-            if (!txs.length) return NotificationService.showError('No transactions to export.');
-            const csv = transactionsToCSV(txs);
-            downloadCSV(csv, 'transactions.csv');
+            const filteredTxs = txs.filter(tx => {
+                return tx.date >= startDate && tx.date <= endDate;
+            });
+            
+            if (!filteredTxs.length) {
+                NotificationService.showError('No transactions found in the selected date range.');
+                return;
+            }
+            
+            const csv = transactionsToCSV(filteredTxs);
+            downloadCSV(csv, `transactions_${startDate}_to_${endDate}.csv`);
+            NotificationService.showSuccess(`Exported ${filteredTxs.length} transactions.`);
         };
     }
-    if (accBtn) {
-        accBtn.onclick = function() {
+    
+    if (allBtn) {
+        allBtn.onclick = function() {
             const txs = window.app.getTransactions();
-            if (!txs.length) return NotificationService.showError('No account history to export.');
-            const csv = accountHistoryToCSV(txs);
-            downloadCSV(csv, 'account_history.csv');
+            if (!txs.length) {
+                NotificationService.showError('No transactions to export.');
+                return;
+            }
+            const csv = transactionsToCSV(txs);
+            downloadCSV(csv, 'all_transactions.csv');
+            NotificationService.showSuccess(`Exported ${txs.length} transactions.`);
+        };
+    }
+    
+    if (budgetsBtn) {
+        budgetsBtn.onclick = function() {
+            const budgets = window.app.state.budgets;
+            if (!budgets.length) {
+                NotificationService.showError('No budgets to export.');
+                return;
+            }
+            const csv = budgetsToCSV(budgets);
+            downloadCSV(csv, 'budgets.csv');
+            NotificationService.showSuccess(`Exported ${budgets.length} budgets.`);
+        };
+    }
+    
+    // Handle file upload
+    const fileInput = document.getElementById('upload-file');
+    const filenameSpan = document.getElementById('upload-filename');
+    
+    if (fileInput) {
+        fileInput.onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                filenameSpan.textContent = `Selected: ${file.name}`;
+                // Here you could add file processing logic
+                NotificationService.showInfo('File import feature coming soon!');
+            } else {
+                filenameSpan.textContent = '';
+            }
         };
     }
 }
@@ -1431,6 +1674,25 @@ function transactionsToCSV(txs) {
         tx.category,
         tx.date
     ]);
+    return [header, ...rows].map(r => r.join(',')).join('\r\n');
+}
+
+function budgetsToCSV(budgets) {
+    const header = ['ID', 'Category', 'Amount', 'Spent', 'Remaining', 'Status'];
+    const rows = budgets.map(budget => {
+        const spent = budget.spent || 0;
+        const remaining = budget.amount - spent;
+        const status = remaining >= 0 ? 'On Track' : 'Over Budget';
+        
+        return [
+            budget.id,
+            '"' + (budget.category || '').replace(/"/g, '""') + '"',
+            budget.amount,
+            spent,
+            remaining,
+            status
+        ];
+    });
     return [header, ...rows].map(r => r.join(',')).join('\r\n');
 }
 
@@ -1480,35 +1742,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 // --- END REPORTS PAGE FUNCTIONALITY ---
-
-// --- BEGIN DARK MODE TOGGLE FUNCTIONALITY ---
-// --- Modern Theme Toggle Button Logic ---
-const themeToggleBtn = document.getElementById('theme-toggle');
-if (themeToggleBtn) {
-    // Set initial icon
-    function updateThemeIcon() {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        themeToggleBtn.innerHTML = isDark
-            ? '<i class="fas fa-sun"></i>'
-            : '<i class="fas fa-moon"></i>';
-        themeToggleBtn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
-        themeToggleBtn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
-    }
-    updateThemeIcon();
-    themeToggleBtn.onclick = function() {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-        localStorage.setItem('theme', isDark ? 'light' : 'dark');
-        updateThemeIcon();
-    };
-    // On load, respect saved theme
-    document.addEventListener('DOMContentLoaded', () => {
-        const saved = localStorage.getItem('theme');
-        if (saved) document.documentElement.setAttribute('data-theme', saved);
-        updateThemeIcon();
-    });
-}
-// --- END DARK MODE TOGGLE FUNCTIONALITY ---
 
 // --- BEGIN BILL REMINDERS ---
 function showBillReminders() {

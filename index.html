@@ -109,12 +109,39 @@
                                 <div class="card-value" id="upcoming-bills">0</div>
                                 <div class="card-change" id="bills-amount">$0.00</div>
                             </div>
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Total Transactions</h3>
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <div class="card-value" id="dashboard-tx-count">0</div>
+                            </div>
                         </div>
                         <!-- Charts Section -->
                         <div class="charts-section">
                             <div class="chart-container"><h3>Spending by Category</h3><canvas id="category-chart"></canvas>
+                                <div class="chart-placeholder" id="category-chart-placeholder" style="display:none;">
+                                    <i class="fas fa-chart-pie"></i>
+                                    <p>Add some expense transactions to see spending by category</p>
+                                </div>
                             </div>
                             <div class="chart-container"><h3>Income vs Expenses</h3><canvas id="income-expense-chart"></canvas>
+                                <div class="chart-placeholder" id="income-expense-chart-placeholder" style="display:none;">
+                                    <i class="fas fa-chart-doughnut"></i>
+                                    <p>Add some transactions to see income vs expenses</p>
+                                </div>
+                            </div>
+                            <div class="chart-container"><h3>Cash Flow</h3><canvas id="cash-flow-chart"></canvas>
+                                <div class="chart-placeholder" id="cash-flow-chart-placeholder" style="display:none;">
+                                    <i class="fas fa-chart-line"></i>
+                                    <p>Add transactions to see cash flow trends over time</p>
+                                </div>
+                            </div>
+                            <div class="chart-container"><h3>Net Worth</h3><canvas id="net-worth-chart"></canvas>
+                                <div class="chart-placeholder" id="net-worth-chart-placeholder" style="display:none;">
+                                    <i class="fas fa-chart-area"></i>
+                                    <p>Add transactions to track your net worth over time</p>
+                                </div>
                             </div>
                         </div>
                         <!-- Recent Transactions -->
@@ -147,37 +174,77 @@
                 <div id="bills-page" class="page"></div>
                 <div id="goals-page" class="page"></div>
                 <div id="reports-page" class="page">
-                    <div class="reports-center-outer">
-                        <div class="section-header" style="justify-content: center;"><h3>Reports & Data Export</h3></div>
-                        <div class="reports-center-wrapper">
-                            <div class="reports-downloads">
-                                <form id="download-range-form" class="download-range-form" autocomplete="off">
-                                    <label for="download-start-date">From:</label>
-                                    <input type="date" id="download-start-date" name="start" required>
-                                    <label for="download-end-date">To:</label>
-                                    <input type="date" id="download-end-date" name="end" required>
-                                    <button type="submit" class="btn btn-primary"><i class="fas fa-download"></i> Download Filtered Transactions (CSV)
-                                    </button>
-                                </form>
-                                <button class="btn btn-secondary" id="download-all-btn"><i class="fas fa-download"></i> Download All Transactions (CSV)
-                                </button>
-                                <form id="upload-form" class="upload-form" enctype="multipart/form-data" autocomplete="off">
-                                    <label for="upload-file" class="btn btn-success"><i class="fas fa-upload"></i> Import CSV or Text
-                                    </label>
-                                    <input type="file" id="upload-file" name="file" accept=".csv,.txt" style="display:none;">
-                                    <span id="upload-filename"></span>
-                                </form>
-                                <table class="import-export-table">
-                                    <tr>
-                                        <td><button class="btn btn-primary" id="download-budgets-btn"><i class="fas fa-download"></i> Download Budgets (CSV)
-                                        </button></td>
-                                    </tr>
-                                    <tr>
-                                    </tr>
-                                </table>
-                            </div>
-                            <div id="reports-info" class="mt-3"></div>
+                    <div class="reports-container">
+                        <div class="reports-header">
+                            <h2><i class="fas fa-chart-bar"></i> Reports & Data Export</h2>
+                            <p>Export your financial data and generate reports</p>
                         </div>
+                        
+                        <div class="reports-grid">
+                            <!-- Export Section -->
+                            <div class="reports-card export-card">
+                                <div class="card-header">
+                                    <i class="fas fa-download"></i>
+                                    <h3>Export Data</h3>
+                                </div>
+                                <div class="card-content">
+                                    <div class="export-section">
+                                        <h4><i class="fas fa-calendar-alt"></i> Date Range Export</h4>
+                                        <form id="download-range-form" class="date-range-form">
+                                            <div class="date-inputs">
+                                                <div class="input-group">
+                                                    <label for="download-start-date">From</label>
+                                                    <input type="date" id="download-start-date" name="start" required>
+                                                </div>
+                                                <div class="input-group">
+                                                    <label for="download-end-date">To</label>
+                                                    <input type="date" id="download-end-date" name="end" required>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-export">
+                                                <i class="fas fa-download"></i> Download Filtered Transactions (CSV)
+                                            </button>
+                                        </form>
+                                    </div>
+                                    
+                                    <div class="export-buttons">
+                                        <button class="btn btn-secondary btn-export" id="download-all-btn">
+                                            <i class="fas fa-database"></i> Download All Transactions (CSV)
+                                        </button>
+                                        <button class="btn btn-info btn-export" id="download-budgets-btn">
+                                            <i class="fas fa-wallet"></i> Download Budgets (CSV)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Import Section -->
+                            <div class="reports-card import-card">
+                                <div class="card-header">
+                                    <i class="fas fa-upload"></i>
+                                    <h3>Import Data</h3>
+                                </div>
+                                <div class="card-content">
+                                    <div class="import-section">
+                                        <div class="import-info">
+                                            <i class="fas fa-info-circle"></i>
+                                            <p>Import transactions from CSV or text files</p>
+                                        </div>
+                                        <form id="upload-form" class="upload-form" enctype="multipart/form-data">
+                                            <div class="file-upload-area">
+                                                <label for="upload-file" class="btn btn-success btn-upload">
+                                                    <i class="fas fa-cloud-upload-alt"></i> Choose File to Import
+                                                </label>
+                                                <input type="file" id="upload-file" name="file" accept=".csv,.txt" style="display:none;">
+                                                <span id="upload-filename" class="upload-filename"></span>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="reports-info" class="reports-info"></div>
                     </div>
                 </div>
                 <div id="calendar-page" class="page"></div>

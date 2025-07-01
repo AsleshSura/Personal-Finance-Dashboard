@@ -47,7 +47,7 @@ if (typeof window !== 'undefined') {
     if (window.Storage) {
         // Example: log the first transaction's formatted date if exists
         const txs = window.Storage.getTransactions();
-        if (txs.length) {
+        if (txs.length > 0 && txs[0].date) {
             console.log('First transaction date:', utils.formatDate(txs[0].date));
         }
     }

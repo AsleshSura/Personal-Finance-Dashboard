@@ -53,6 +53,13 @@ window.Storage = Storage;
 
 // Example cross-link: use a utility from utils.js for demonstration
 if (typeof window !== 'undefined' && window.utils) {
-    // Example: log the number of transactions using a utility
-    console.log('Total transactions:', window.utils.formatCurrency(Storage.getTransactions().length));
+    // Example: log the number of transactions with proper formatting
+    console.log('Total transactions:', Storage.getTransactions().length);
+} else {
+    // Defer the cross-reference check until utils is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.utils) {
+            console.log('Total transactions:', Storage.getTransactions().length);
+        }
+    });
 }
